@@ -1,0 +1,31 @@
+# Flask and core dependencies
+Flask>=3.0.0
+Flask-SQLAlchemy>=3.0.0
+Flask-Login>=0.6.0
+Werkzeug>=3.0.0
+
+# Machine Learning and data processing
+scikit-learn>=1.0.0
+numpy>=1.21.0
+opencv-python>=4.0.0
+pytesseract>=0.3.0
+
+# AI/LLM dependencies
+openai>=1.0.0
+python-dotenv>=1.0.0
+
+# PDF processing
+weasyprint>=60.0
+
+# Medibot dependencies
+langchain>=0.3.0
+langchain-community>=0.3.0
+langchain-core>=0.3.0
+langchain-groq>=0.3.0
+langchain-huggingface>=0.3.0
+sentence-transformers>=5.0.0
+faiss-cpu>=1.0.0
+groq>=0.29.0
+huggingface-hub>=0.20.0
+transformers>=4.40.0
+torch>=2.0.0
