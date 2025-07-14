@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="bg-white p-6 rounded shadow">
+  <h1 class="text-2xl font-bold mb-4">🩺 AI Symptom Checker</h1>
+  
+  <div class="mb-6 p-4 bg-blue-50 border-l-4 border-blue-400 rounded">
+    <p class="text-blue-800">
+      <strong>ℹ️ How it works:</strong> Select your symptoms, and our AI will analyze them using medical literature 
+      to provide possible conditions and recommendations. This is not a substitute for professional medical advice.
+    </p>
+  </div>
+
+  <form method="POST" class="space-y-6">
+    <!-- Symptom Selection -->
+    <div>
+      <label class="block text-lg font-semibold mb-3">Select Your Symptoms:</label>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+        {% for symptom in common_symptoms %}
+        <label class="flex items-center p-3 border rounded hover:bg-gray-50 cursor-pointer">
+          <input type="checkbox" name="symptoms" value="{{ symptom }}" class="mr-2">
+          <span>{{ symptom }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Custom Symptom -->
+    <div>
+      <label class="block font-semibold mb-2">Other Symptoms (optional):</label>
+      <textarea name="other_symptoms" class="w-full border p-2 rounded" 
+                placeholder="Describe any other symptoms not listed above..."></textarea>
+    </div>
+
+    <!-- Duration -->
+    <div>
+      <label class="block font-semibold mb-2">How long have you had these symptoms?</label>
+      <select name="duration" class="w-full border p-2 rounded" required>
+        <option value="">Select duration</option>
+        <option value="Less than 1 day">Less than 1 day</option>
+        <option value="1-3 days">1-3 days</option>
+        <option value="4-7 days">4-7 days</option>
+        <option value="1-2 weeks">1-2 weeks</option>
+        <option value="More than 2 weeks">More than 2 weeks</option>
+      </select>
+    </div>
+
+    <!-- Severity -->
+    <div>
+      <label class="block font-semibold mb-2">Rate your overall discomfort (1-10):</label>
+      <div class="flex items-center space-x-2">
+        <span class="text-green-500">1 (Mild)</span>
+        <input type="range" name="severity" min="1" max="10" value="5" 
+               class="flex-1" oninput="updateSeverity(this.value)">
+        <span class="text-red-500">10 (Severe)</span>
+      </div>
+      <div class="text-center mt-2">
+        <span id="severityValue" class="font-semibold">5</span>/10
+      </div>
+    </div>
+
+    <button type="submit" class="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition">
+      🔍 Analyze Symptoms
+    </button>
+  </form>
+
+  {% if diagnosis %}
+  <div class="mt-8 space-y-4">
+    <!-- Risk Level Indicator -->
+    <div class="p-4 rounded-lg border-l-4 
+                {% if risk_level == 'High' %}border-red-500 bg-red-50{% elif risk_level == 'Medium' %}border-yellow-500 bg-yellow-50{% else %}border-green-500 bg-green-50{% endif %}">
+      <div class="flex items-center">
+        <span class="text-2xl mr-2">
+          {% if risk_level == 'High' %}🚨{% elif risk_level == 'Medium' %}⚠️{% else %}✅{% endif %}
+        </span>
+        <div>
+          <h3 class="font-bold text-lg">Risk Level: {{ risk_level }}</h3>
+          {% if risk_level == 'High' %}
+          <p class="text-red-700">These symptoms may require immediate medical attention.</p>
+          {% elif risk_level == 'Medium' %}
+          <p class="text-yellow-700">These symptoms should be evaluated by a healthcare provider.</p>
+          {% else %}
+          <p class="text-green-700">These symptoms are typically manageable but monitor for changes.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Analysis -->
+    <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg transition-colors duration-300">
+      <h3 class="font-bold text-lg mb-2 text-gray-900 dark:text-gray-100">🤖 AI Analysis:</h3>
+      <div class="whitespace-pre-wrap text-gray-900 dark:text-gray-100 font-medium leading-relaxed">{{ diagnosis }}</div>
+    </div>
+
+    <!-- Recommendations -->
+    {% if recommendations %}
+    <div class="bg-blue-50 p-4 rounded-lg">
+      <h3 class="font-bold text-lg mb-2">📋 Recommendations:</h3>
+      <ul class="list-disc list-inside space-y-1">
+        {% for rec in recommendations %}
+        <li>{{ rec }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <!-- Emergency Warning -->
+    {% if risk_level == 'High' %}
+    <div class="bg-red-100 border border-red-400 p-4 rounded-lg">
+      <h3 class="font-bold text-red-800 text-lg mb-2">🚨 Emergency Warning</h3>
+      <p class="text-red-700">
+        If you're experiencing severe symptoms, don't wait. Call emergency services (911) or visit 
+        your nearest emergency room immediately.
+      </p>
+      <div class="mt-3 flex space-x-3">
+        <a href="tel:911" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+          📞 Call 911
+        </a>
+        <button onclick="findNearestHospital()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+          🏥 Find Hospital
+        </button>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Medical Disclaimer -->
+  <div class="mt-8 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-sm">
+    <p><strong>⚠️ Important Medical Disclaimer:</strong></p>
+    <ul class="list-disc list-inside mt-2 space-y-1">
+      <li>This tool is for informational purposes only and is not a substitute for professional medical advice</li>
+      <li>Always consult with qualified healthcare professionals for accurate diagnosis and treatment</li>
+      <li>In case of emergency, call 911 or visit your nearest emergency room immediately</li>
+      <li>This AI analysis is based on general medical knowledge and may not account for your specific medical history</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+function updateSeverity(value) {
+  document.getElementById('severityValue').textContent = value;
+}
+
+function findNearestHospital() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(position) {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      const url = `https://www.google.com/maps/search/hospital+near+me/@${lat},${lng},15z`;
+      window.open(url, '_blank');
+    });
+  } else {
+    window.open('https://www.google.com/maps/search/hospital+near+me', '_blank');
+  }
+}
+
+// Auto-check symptoms based on URL parameters (for integration with chatbot)
+document.addEventListener('DOMContentLoaded', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const symptom = urlParams.get('symptom');
+  if (symptom) {
+    const checkboxes = document.querySelectorAll('input[name="symptoms"]');
+    checkboxes.forEach(checkbox => {
+      if (checkbox.value.toLowerCase().includes(symptom.toLowerCase())) {
+        checkbox.checked = true;
+      }
+    });
+  }
+});
+</script>
+
+{% endblock %}

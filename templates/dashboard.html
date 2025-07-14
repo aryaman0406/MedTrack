@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Welcome, {{ current_user.username }}!</h1>
+
+{% if risk_alerts %}
+<div class="bg-red-100 p-3 rounded mb-4">
+  <strong>⚠️ High Risk:</strong>
+  <ul>
+    {% for r, p in risk_alerts %}
+      <li>{{ r.name }} at {{ r.time }} ({{ '%.1f' % (p*100) }}% risk)</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<div class="bg-white p-4 rounded shadow mb-6">
+  <form method="POST" class="grid md:grid-cols-3 gap-4">
+    <input name="name" placeholder="Medicine Name" required class="p-2 border rounded">
+    <input name="dosage" placeholder="Dosage" required class="p-2 border rounded">
+    <input type="time" name="time" required class="p-2 border rounded">
+    <button type="submit" class="col-span-3 bg-blue-600 text-white py-2 rounded">Add Reminder</button>
+  </form>
+</div>
+
+<div class="mb-4">
+  <a href="?filter=all" class="px-3 py-1 rounded bg-gray-300 text-sm {% if filter == 'all' %}bg-blue-500 text-white{% endif %}">All</a>
+  <a href="?filter=taken" class="px-3 py-1 rounded bg-gray-300 text-sm {% if filter == 'taken' %}bg-blue-500 text-white{% endif %}">Taken</a>
+  <a href="?filter=pending" class="px-3 py-1 rounded bg-gray-300 text-sm {% if filter == 'pending' %}bg-blue-500 text-white{% endif %}">Pending</a>
+</div>
+
+<div class="bg-white p-6 rounded shadow mb-6 text-center">
+  <h2 class="text-lg font-bold mb-2">📈 Weekly Adherence</h2>
+  <div class="relative w-32 h-32 mx-auto">
+    <svg class="w-full h-full">
+      <circle cx="50%" cy="50%" r="45" stroke="#e5e7eb" stroke-width="10" fill="none" />
+      <circle cx="50%" cy="50%" r="45" stroke="#4f46e5" stroke-width="10" fill="none"
+        stroke-dasharray="282.6"
+        stroke-dashoffset="{{ 282.6 - (282.6 * progress_percent / 100) }}"
+        transform="rotate(-90 64 64)" />
+    </svg>
+    <div class="absolute inset-0 flex items-center justify-center text-2xl font-bold text-blue-700">
+      {{ progress_percent }}%
+    </div>
+  </div>
+</div>
+
+<ul class="space-y-2">
+  {% for r in reminders %}
+  <li class="bg-white p-3 rounded shadow flex justify-between items-center">
+    <div>
+      <strong>{{ r.name }}</strong> - {{ r.dosage }} at {{ r.time }}
+      {% if r.taken %}
+        <span class="ml-2 text-green-600">(Taken at {{ r.time_taken }})</span>
+      {% else %}
+        <span class="ml-2 text-yellow-600">(Pending)</span>
+      {% endif %}
+    </div>
+    <div class="flex space-x-2">
+      {% if not r.taken %}
+        <form method="POST" action="{{ url_for('mark_reminder_taken', reminder_id=r.id) }}">
+          <button class="bg-green-600 text-white px-3 py-1 rounded text-sm">Mark as Taken</button>
+        </form>
+      {% else %}
+        <form method="POST" action="{{ url_for('undo_reminder_taken', reminder_id=r.id) }}">
+          <button class="bg-red-500 text-white px-3 py-1 rounded text-sm">Undo</button>
+        </form>
+      {% endif %}
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    if ("Notification" in window && Notification.permission !== "granted") {
+      Notification.requestPermission();
+    }
+
+    const reminders = {{ reminders_json|tojson }};
+
+    const notified = new Set();
+
+    setInterval(() => {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const currentTime = `${hours}:${minutes}`;
+
+      reminders.forEach(r => {
+        if (!r.taken && r.time === currentTime && !notified.has(r.id)) {
+          notified.add(r.id);
+          new Notification("💊 Medicine Reminder", {
+            body: `${r.name} (${r.dosage}) is scheduled for now!`,
+            icon: "/static/icon.png"
+          });
+        }
+      });
+    }, 60000);
+  });
+</script>
+{% endblock %}

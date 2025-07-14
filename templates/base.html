@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MedTrack</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <script>
+    // Apply theme before page loads to prevent flash
+    if (localStorage.getItem('theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+    }
+  </script>
+</head>
+<body class="bg-gray-100 text-gray-800 transition-colors duration-300">
+  <header class="bg-white dark:bg-gray-800 shadow p-4 mb-6 flex justify-between items-center transition-colors duration-300">
+    <div class="font-bold text-xl text-blue-600 dark:text-blue-400">💊 MedTrack</div>
+    <nav class="hidden md:flex space-x-4">
+      <a href="{{ url_for('dashboard') }}" class="nav-link text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">📊 Dashboard</a>
+      <a href="{{ url_for('chatbot') }}" class="nav-link text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">💬 Chatbot</a>
+      <a href="{{ url_for('symptom_checker') }}" class="nav-link text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">🩺 Symptoms</a>
+      <a href="{{ url_for('drug_interactions') }}" class="nav-link text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">💊 Drug Check</a>
+      <a href="{{ url_for('analytics') }}" class="nav-link text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">📈 Analytics</a>
+      <a href="{{ url_for('profile') }}" class="nav-link text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">👤 Profile</a>
+      <a href="{{ url_for('uploads') }}" class="nav-link text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">📁 Documents</a>
+      <a href="{{ url_for('ocr_upload') }}" class="nav-link text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">📸 OCR</a>
+      <a href="{{ url_for('export_pdf') }}" class="nav-link text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">📤 PDF</a>
+      <a href="{{ url_for('logout') }}" class="nav-link text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors">🚪 Logout</a>
+    </nav>
+    
+    <!-- Mobile menu button -->
+    <button id="mobileMenuBtn" class="md:hidden text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+      </svg>
+    </button>
+    
+    <button id="themeToggle" class="ml-4 text-sm px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-300 font-medium border border-gray-300 dark:border-gray-600 shadow-sm">
+      <span class="theme-icon">🌗</span> <span class="theme-text">Toggle Theme</span>
+    </button>
+  </header>
+
+  <!-- Mobile Navigation Menu -->
+  <div id="mobileMenu" class="md:hidden bg-white dark:bg-gray-800 shadow-lg hidden transition-all duration-300">
+    <nav class="px-4 py-2 space-y-2">
+      <a href="{{ url_for('dashboard') }}" class="block py-2 nav-link text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 px-3 rounded transition-colors duration-200">📊 Dashboard</a>
+      <a href="{{ url_for('chatbot') }}" class="block py-2 nav-link text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 px-3 rounded transition-colors duration-200">💬 Chatbot</a>
+      <a href="{{ url_for('symptom_checker') }}" class="block py-2 nav-link text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 px-3 rounded transition-colors duration-200">🩺 Symptoms</a>
+      <a href="{{ url_for('drug_interactions') }}" class="block py-2 nav-link text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 px-3 rounded transition-colors duration-200">💊 Drug Check</a>
+      <a href="{{ url_for('analytics') }}" class="block py-2 nav-link text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 px-3 rounded transition-colors duration-200">📈 Analytics</a>
+      <a href="{{ url_for('profile') }}" class="block py-2 nav-link text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 px-3 rounded transition-colors duration-200">👤 Profile</a>
+      <a href="{{ url_for('uploads') }}" class="block py-2 nav-link text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 px-3 rounded transition-colors duration-200">📁 Documents</a>
+      <a href="{{ url_for('ocr_upload') }}" class="block py-2 nav-link text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 px-3 rounded transition-colors duration-200">📸 OCR</a>
+      <a href="{{ url_for('export_pdf') }}" class="block py-2 nav-link text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 px-3 rounded transition-colors duration-200">📤 PDF</a>
+      <a href="{{ url_for('logout') }}" class="block py-2 nav-link text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900 px-3 rounded transition-colors duration-200">🚪 Logout</a>
+    </nav>
+  </div>
+
+  <main class="container mx-auto px-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 p-3 mb-4 rounded-lg border border-red-200 dark:border-red-700">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <script>
+  // Enhanced theme handling
+  const themeToggle = document.getElementById('themeToggle');
+  const themeIcon = document.querySelector('.theme-icon');
+  const themeText = document.querySelector('.theme-text');
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  const mobileMenu = document.getElementById('mobileMenu');
+
+  // Check theme on load
+  function updateTheme() {
+    const isDark = document.documentElement.classList.contains('dark');
+    themeIcon.textContent = isDark ? '☀️' : '🌙';
+    themeText.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+    document.body.classList.toggle('dark', isDark);
+  }
+
+  // Initialize theme
+  if (localStorage.getItem('theme') === 'dark') {
+    document.documentElement.classList.add('dark');
+  }
+  updateTheme();
+
+  themeToggle.addEventListener('click', function () {
+    document.documentElement.classList.toggle('dark');
+    document.body.classList.toggle('dark');
+    const isDark = document.documentElement.classList.contains('dark');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    updateTheme();
+  });
+
+  // Mobile menu toggle
+  mobileMenuBtn.addEventListener('click', function() {
+    mobileMenu.classList.toggle('hidden');
+  });
+
+  // Close mobile menu when clicking outside
+  document.addEventListener('click', function(event) {
+    if (!mobileMenuBtn.contains(event.target) && !mobileMenu.contains(event.target)) {
+      mobileMenu.classList.add('hidden');
+    }
+  });
+  </script>
+
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    if (Notification.permission !== "granted") {
+      Notification.requestPermission();
+    }
+
+    {% if risk_alerts %}
+      {% for r, p in risk_alerts %}
+        new Notification("⚠️ Reminder Missed?", {
+          body: "You may miss {{ r.name }} at {{ r.time }} (Risk: {{ '%.1f' % (p*100) }}%)",
+          icon: "https://img.icons8.com/emoji/48/pill-emoji.png"
+        });
+      {% endfor %}
+    {% endif %}
+  });
+  </script>
+</body>
+</html>

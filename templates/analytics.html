@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/analytics.css') }}">
+
+<div class="analytics-container">
+  <!-- Header Section -->
+  <div class="analytics-header">
+    <h1 class="analytics-title">📊 Medical Analytics Dashboard</h1>
+    <p class="analytics-subtitle">Track your medication adherence and health patterns</p>
+  </div>
+
+  <!-- Summary Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card stat-card-primary">
+      <div class="stat-icon">✅</div>
+      <div class="stat-content">
+        <h3 class="stat-number">{{ taken }}</h3>
+        <p class="stat-label">Medicines Taken</p>
+      </div>
+    </div>
+    
+    <div class="stat-card stat-card-danger">
+      <div class="stat-icon">❌</div>
+      <div class="stat-content">
+        <h3 class="stat-number">{{ missed }}</h3>
+        <p class="stat-label">Medicines Missed</p>
+      </div>
+    </div>
+    
+    <div class="stat-card stat-card-info">
+      <div class="stat-icon">💊</div>
+      <div class="stat-content">
+        <h3 class="stat-number">{{ total }}</h3>
+        <p class="stat-label">Total Reminders</p>
+      </div>
+    </div>
+    
+    <div class="stat-card stat-card-success">
+      <div class="stat-icon">📈</div>
+      <div class="stat-content">
+        <h3 class="stat-number">{% set adherence = (taken/total*100) if total > 0 else 0 %}{{ "%.1f"|format(adherence) }}%</h3>
+        <p class="stat-label">Adherence Rate</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Section -->
+  <div class="charts-grid">
+    <!-- Pie Chart for Overall Distribution -->
+    <div class="chart-container">
+      <div class="chart-header">
+        <h2 class="chart-title">📊 Medicine Distribution</h2>
+        <div class="chart-actions">
+          <button class="chart-btn" onclick="toggleChartType('pieChart')">
+            🔄 Toggle View
+          </button>
+        </div>
+      </div>
+      <div class="chart-wrapper">
+        <canvas id="pieChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Line Chart for Trends -->
+    <div class="chart-container">
+      <div class="chart-header">
+        <h2 class="chart-title">📈 Weekly Trend</h2>
+        <div class="chart-actions">
+          <button class="chart-btn" onclick="downloadChart('trendChart')">
+            💾 Download
+          </button>
+        </div>
+      </div>
+      <div class="chart-wrapper">
+        <canvas id="trendChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Bar Chart for Daily Comparison -->
+    <div class="chart-container chart-container-wide">
+      <div class="chart-header">
+        <h2 class="chart-title">📅 Daily Comparison</h2>
+        <div class="chart-actions">
+          <button class="chart-btn" onclick="animateChart('dailyChart')">
+            ✨ Animate
+          </button>
+        </div>
+      </div>
+      <div class="chart-wrapper">
+        <canvas id="dailyChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Insights Section -->
+  <div class="insights-section">
+    <h2 class="insights-title">🔍 Health Insights</h2>
+    <div class="insights-grid">
+      <div class="insight-card">
+        <div class="insight-icon">🎯</div>
+        <h3>Adherence Goal</h3>
+        <p>{% set adherence = (taken/total*100) if total > 0 else 0 %}
+        {% if adherence >= 80 %}
+          Excellent! You're meeting your medication goals.
+        {% elif adherence >= 60 %}
+          Good progress! Try to improve consistency.
+        {% else %}
+          Focus needed. Consider setting more reminders.
+        {% endif %}</p>
+      </div>
+      
+      <div class="insight-card">
+        <div class="insight-icon">⏰</div>
+        <h3>Best Time</h3>
+        <p>Morning medications show highest adherence rates. Consider scheduling important meds early.</p>
+      </div>
+      
+      <div class="insight-card">
+        <div class="insight-icon">🏆</div>
+        <h3>Achievement</h3>
+        <p>{% if taken >= 5 %}
+          Great job! You've taken {{ taken }} medications this week.
+        {% else %}
+          Keep going! Every medication counts for your health.
+        {% endif %}</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<script>
+// Register the plugin
+Chart.register(ChartDataLabels);
+
+// Get theme preference
+const isDarkMode = document.body.classList.contains('dark') || localStorage.getItem('theme') === 'dark';
+
+// Common chart colors for dark/light theme
+const colors = {
+  taken: isDarkMode ? '#10B981' : '#059669',
+  missed: isDarkMode ? '#EF4444' : '#DC2626',
+  takenLight: isDarkMode ? 'rgba(16, 185, 129, 0.2)' : 'rgba(5, 150, 105, 0.2)',
+  missedLight: isDarkMode ? 'rgba(239, 68, 68, 0.2)' : 'rgba(220, 38, 38, 0.2)',
+  text: isDarkMode ? '#F3F4F6' : '#374151',
+  grid: isDarkMode ? '#4B5563' : '#E5E7EB'
+};
+
+// Common chart options
+const commonOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      labels: {
+        color: colors.text,
+        font: {
+          size: 12,
+          weight: 'bold'
+        }
+      }
+    }
+  },
+  scales: {
+    x: {
+      ticks: { color: colors.text },
+      grid: { color: colors.grid }
+    },
+    y: {
+      ticks: { color: colors.text },
+      grid: { color: colors.grid },
+      beginAtZero: true
+    }
+  }
+};
+
+// Pie Chart
+const pieChart = new Chart(document.getElementById('pieChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Medicines Taken', 'Medicines Missed'],
+    datasets: [{
+      data: [{{ taken }}, {{ missed }}],
+      backgroundColor: [colors.taken, colors.missed],
+      borderColor: [colors.taken, colors.missed],
+      borderWidth: 2,
+      hoverOffset: 10
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          color: colors.text,
+          padding: 20,
+          font: { size: 12, weight: 'bold' }
+        }
+      },
+      datalabels: {
+        color: '#fff',
+        font: { size: 14, weight: 'bold' },
+        formatter: (value, ctx) => {
+          const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+          const percentage = ((value / total) * 100).toFixed(1);
+          return percentage + '%';
+        }
+      }
+    }
+  }
+});
+
+// Line Chart for Trends
+const trendChart = new Chart(document.getElementById('trendChart'), {
+  type: 'line',
+  data: {
+    labels: {{ day_labels | tojson }},
+    datasets: [
+      {
+        label: 'Medicines Taken',
+        data: {{ taken_data | tojson }},
+        borderColor: colors.taken,
+        backgroundColor: colors.takenLight,
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: colors.taken,
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 6
+      },
+      {
+        label: 'Medicines Missed',
+        data: {{ missed_data | tojson }},
+        borderColor: colors.missed,
+        backgroundColor: colors.missedLight,
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: colors.missed,
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 6
+      }
+    ]
+  },
+  options: {
+    ...commonOptions,
+    plugins: {
+      ...commonOptions.plugins,
+      datalabels: {
+        display: false
+      }
+    },
+    interaction: {
+      intersect: false,
+      mode: 'index'
+    }
+  }
+});
+
+// Bar Chart for Daily Comparison
+const dailyChart = new Chart(document.getElementById('dailyChart'), {
+  type: 'bar',
+  data: {
+    labels: {{ day_labels | tojson }},
+    datasets: [
+      {
+        label: 'Medicines Taken',
+        data: {{ taken_data | tojson }},
+        backgroundColor: colors.taken,
+        borderColor: colors.taken,
+        borderWidth: 1,
+        borderRadius: 4
+      },
+      {
+        label: 'Medicines Missed',
+        data: {{ missed_data | tojson }},
+        backgroundColor: colors.missed,
+        borderColor: colors.missed,
+        borderWidth: 1,
+        borderRadius: 4
+      }
+    ]
+  },
+  options: {
+    ...commonOptions,
+    plugins: {
+      ...commonOptions.plugins,
+      datalabels: {
+        anchor: 'end',
+        align: 'top',
+        color: colors.text,
+        font: { size: 10, weight: 'bold' },
+        formatter: (value) => value > 0 ? value : ''
+      }
+    }
+  }
+});
+
+// Chart interaction functions
+function toggleChartType(chartId) {
+  const chart = Chart.getChart(chartId);
+  if (chart.config.type === 'doughnut') {
+    chart.config.type = 'pie';
+  } else {
+    chart.config.type = 'doughnut';
+  }
+  chart.update();
+}
+
+function downloadChart(chartId) {
+  const chart = Chart.getChart(chartId);
+  const url = chart.toBase64Image();
+  const link = document.createElement('a');
+  link.download = `medtrack-${chartId}-${new Date().toISOString().split('T')[0]}.png`;
+  link.href = url;
+  link.click();
+}
+
+function animateChart(chartId) {
+  const chart = Chart.getChart(chartId);
+  chart.update('active');
+  setTimeout(() => chart.update(), 100);
+}
+
+// Update charts when theme changes
+document.getElementById('themeToggle').addEventListener('click', function() {
+  setTimeout(() => {
+    location.reload(); // Reload to apply new theme colors
+  }, 100);
+});
+
+// Add subtle animations on load
+document.addEventListener('DOMContentLoaded', function() {
+  const cards = document.querySelectorAll('.stat-card, .chart-container, .insight-card');
+  cards.forEach((card, index) => {
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(20px)';
+    setTimeout(() => {
+      card.style.transition = 'all 0.6s ease';
+      card.style.opacity = '1';
+      card.style.transform = 'translateY(0)';
+    }, index * 100);
+  });
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Arial, sans-serif; padding: 2rem; }
+    h1 { color: #1f2937; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #ccc; padding: 0.5rem; }
+  </style>
+</head>
+<body>
+  <h1>🧾 Health Report - {{ user.name or user.username }}</h1>
+  <p><strong>Age:</strong> {{ user.age }} | <strong>Weight:</strong> {{ user.weight_kg }} kg | <strong>Height:</strong> {{ user.height_cm }} cm</p>
+  <h2>📋 Medication History</h2>
+  <table>
+    <tr><th>Name</th><th>Dosage</th><th>Time</th><th>Status</th></tr>
+    {% for r in reminders %}
+    <tr>
+      <td>{{ r.name }}</td>
+      <td>{{ r.dosage }}</td>
+      <td>{{ r.time }}</td>
+      <td>{{ "Taken" if r.taken else "Missed" }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <h2>🩺 Symptom Logs</h2>
+  <table>
+    <tr><th>Date</th><th>Symptom</th><th>Severity</th></tr>
+    {% for s in symptoms %}
+    <tr>
+      <td>{{ s.date }}</td>
+      <td>{{ s.symptom }}</td>
+      <td>{{ s.severity }}/10</td>
+    </tr>
+    {% endfor %}
+  </table>
+</body>
+</html>

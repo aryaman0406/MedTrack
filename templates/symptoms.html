@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="bg-white p-6 rounded shadow">
+  <h1 class="text-xl font-bold mb-4">🩺 Symptom Tracker</h1>
+  <form method="POST" class="space-y-4">
+    <input type="date" name="date" required class="w-full border p-2 rounded">
+    <input name="symptom" placeholder="Symptom description" class="w-full border p-2 rounded">
+    <input type="number" name="severity" placeholder="Severity (1–10)" class="w-full border p-2 rounded">
+    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Add Log</button>
+  </form>
+
+  <ul class="mt-6 space-y-2">
+    {% for log in logs %}
+      <li class="bg-gray-100 p-3 rounded">{{ log.date }} - {{ log.symptom }} ({{ log.severity }}/10)</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}
