@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+{% block title %}Emergency Contacts - MedTrack{% endblock %}
+{% block content %}
+<div class="feature-container">
+    <div class="feature-header">
+        <h1>🆘 Emergency Contacts</h1>
+        <p>Keep your important contacts accessible for emergencies</p>
+        <a href="{{ url_for('emergency_card') }}" target="_blank"
+            class="mt-4 inline-block bg-red-600 text-white px-6 py-2 rounded-full shadow hover:bg-red-700 transition">
+            🖨️ Print Emergency QR Card
+        </a>
+    </div>
+
+    <!-- Add Contact Form -->
+    <div class="form-card">
+        <h3>➕ Add Emergency Contact</h3>
+        <form method="POST" class="contact-form">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Name *</label>
+                    <input type="text" name="name" required placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label>Relationship *</label>
+                    <input type="text" name="relationship" required placeholder="Spouse, Parent, Doctor...">
+                </div>
+                <div class="form-group">
+                    <label>Phone Number *</label>
+                    <input type="tel" name="phone" required placeholder="+1 234 567 8900">
+                </div>
+                <div class="form-group">
+                    <label>Email (Optional)</label>
+                    <input type="email" name="email" placeholder="john@example.com">
+                </div>
+                <div class="form-group full-width checkbox-group">
+                    <input type="checkbox" id="is_primary" name="is_primary" value="true">
+                    <label for="is_primary">Set as Primary Emergency Contact (ICE)</label>
+                </div>
+            </div>
+            <button type="submit" class="btn-primary">Save Contact</button>
+        </form>
+    </div>
+
+    <!-- Contacts List -->
+    <div class="contacts-grid">
+        {% for contact in contacts %}
+        <div class="contact-card {% if contact.is_primary %}primary-contact{% endif %}">
+            <div class="contact-header">
+                <div>
+                    <h4>{{ contact.name }}</h4>
+                    <span class="relationship">{{ contact.relationship }}</span>
+                </div>
+                {% if contact.is_primary %}
+                <span class="badge-ice">ICE</span>
+                {% endif %}
+            </div>
+
+            <div class="contact-info">
+                <a href="tel:{{ contact.phone }}" class="info-link phone">
+                    📞 {{ contact.phone }}
+                </a>
+                {% if contact.email %}
+                <a href="mailto:{{ contact.email }}" class="info-link email">
+                    ✉️ {{ contact.email }}
+                </a>
+                {% endif %}
+            </div>
+
+            <div class="contact-actions">
+                <a href="tel:{{ contact.phone }}" class="btn-action call">Call Now</a>
+                <form method="POST" action="{{ url_for('delete_emergency_contact', id=contact.id) }}">
+                    <button type="submit" class="btn-action delete"
+                        onclick="return confirm('Remove this contact?')">Remove</button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state full-width">
+            <span class="empty-icon">📇</span>
+            <p>No emergency contacts added yet</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .feature-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .feature-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .feature-header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+    }
+
+    .form-card {
+        background: var(--card-bg);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 40px;
+        box-shadow: var(--shadow);
+    }
+
+    .form-card h3 {
+        margin-bottom: 20px;
+        color: var(--primary);
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-group.full-width {
+        grid-column: span 2;
+    }
+
+    .checkbox-group {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .form-group input:not([type="checkbox"]) {
+        padding: 12px;
+        border: 2px solid var(--border);
+        border-radius: 10px;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+    }
+
+    .contacts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
+    .contact-card {
+        background: var(--card-bg);
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
+        transition: transform 0.2s;
+    }
+
+    .contact-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .contact-card.primary-contact {
+        border: 2px solid #ef4444;
+        background: rgba(239, 68, 68, 0.05);
+    }
+
+    .contact-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .contact-header h4 {
+        margin: 0;
+        font-size: 1.2rem;
+        color: var(--text-primary);
+    }
+
+    .relationship {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+
+    .badge-ice {
+        background: #ef4444;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 5px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+
+    .contact-info {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .info-link {
+        text-decoration: none;
+        color: var(--text-primary);
+        padding: 5px 0;
+    }
+
+    .info-link:hover {
+        color: var(--primary);
+    }
+
+    .contact-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-action {
+        flex: 1;
+        padding: 8px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        text-align: center;
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: opacity 0.2s;
+    }
+
+    .btn-action.call {
+        background: #4ade80;
+        color: white;
+        display: block;
+    }
+
+    .btn-action.delete {
+        background: #f87171;
+        color: white;
+    }
+
+    .btn-action:hover {
+        opacity: 0.9;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        grid-column: 1 / -1;
+    }
+
+    .empty-icon {
+        font-size: 3rem;
+        display: block;
+        margin-bottom: 10px;
+    }
+</style>
+{% endblock %}

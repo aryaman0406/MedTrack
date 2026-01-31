@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block title %}Streaks & Rewards - MedTrack{% endblock %}
+{% block content %}
+<div class="feature-container">
+    <div class="header-section">
+        <h1>🏆 Health Achievements</h1>
+        <p>Stay consistent, earn rewards, and improve your health!</p>
+    </div>
+
+    <!-- Main Streak Card -->
+    <div class="streak-card">
+        <div class="fire-animation">🔥</div>
+        <div class="streak-count">{{ streak.current_streak }}</div>
+        <div class="streak-label">Day Streak</div>
+
+        <div class="streak-stats">
+            <div class="stat">
+                <span class="value">{{ streak.total_days_tracked }}</span>
+                <span class="label">Total Days</span>
+            </div>
+            <div class="stat">
+                <span class="value">{{ streak.points }}</span>
+                <span class="label">Health Points</span>
+            </div>
+            <div class="stat">
+                <span class="value">{{ streak.longest_streak }}</span>
+                <span class="label">Best Streak</span>
+            </div>
+        </div>
+
+        <div class="streak-message">
+            {% if streak.current_streak == 0 %}
+            Start your streak today by taking all your medications!
+            {% else %}
+            Keep it up! You're doing great!
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Badges Section -->
+    <div class="badges-section">
+        <h3>🏅 Your Badges</h3>
+        <div class="badges-grid">
+            {% for badge_id, info in badge_info.items() %}
+            <div class="badge-card {% if badge_id in badges %}earned{% else %}locked{% endif %}">
+                <div class="badge-icon">{{ info.icon }}</div>
+                <h4>{{ info.name }}</h4>
+                <p>{{ info.desc }}</p>
+                {% if badge_id not in badges %}
+                <div class="lock-overlay">🔒 Locked</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .feature-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .header-section {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .header-section h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+    }
+
+    .streak-card {
+        background: linear-gradient(135deg, #FF9966 0%, #FF5E62 100%);
+        border-radius: 25px;
+        padding: 40px;
+        text-align: center;
+        color: white;
+        box-shadow: 0 10px 30px rgba(255, 94, 98, 0.4);
+        margin-bottom: 50px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .fire-animation {
+        font-size: 4rem;
+        margin-bottom: 10px;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.1);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    .streak-count {
+        font-size: 5rem;
+        font-weight: 800;
+        line-height: 1;
+        margin-bottom: 5px;
+    }
+
+    .streak-label {
+        font-size: 1.5rem;
+        opacity: 0.9;
+        margin-bottom: 30px;
+    }
+
+    .streak-stats {
+        display: flex;
+        justify-content: center;
+        gap: 40px;
+        border-top: 1px solid rgba(255, 255, 255, 0.3);
+        padding-top: 20px;
+    }
+
+    .stat {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stat .value {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    .stat .label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+
+    .badges-section h3 {
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .badges-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 20px;
+    }
+
+    .badge-card {
+        background: var(--card-bg);
+        border-radius: 15px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: var(--shadow);
+        transition: transform 0.2s;
+        position: relative;
+    }
+
+    .badge-card.earned {
+        border: 2px solid #FFD700;
+        background: linear-gradient(to bottom right, var(--card-bg), rgba(255, 215, 0, 0.1));
+    }
+
+    .badge-card.locked {
+        opacity: 0.7;
+        filter: grayscale(1);
+    }
+
+    .badge-icon {
+        font-size: 3rem;
+        margin-bottom: 10px;
+    }
+
+    .badge-card h4 {
+        margin: 5px 0;
+        font-size: 1rem;
+    }
+
+    .badge-card p {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin: 0;
+    }
+
+    .lock-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+
+    .badge-card.earned:hover {
+        transform: translateY(-5px);
+    }
+</style>
+{% endblock %}

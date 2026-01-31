@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block title %}Health News - MedTrack{% endblock %}
+{% block content %}
+<div class="feature-container">
+    <div class="header-section">
+        <h1>📰 Health News & Tips</h1>
+        <p>Curated health information for your well-being</p>
+    </div>
+
+    <!-- Daily Tips Grid -->
+    <h3 class="section-title">💡 Daily Health Tips</h3>
+    <div class="tips-grid">
+        {% for tip in health_tips %}
+        <div class="tip-card">
+            <div class="tip-icon">{{ tip.icon }}</div>
+            <h4>{{ tip.title }}</h4>
+            <p>{{ tip.tip }}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- News Feed -->
+    <h3 class="section-title">🌍 Latest Health Articles</h3>
+    <div class="news-list">
+        {% for news in news_items %}
+        <div class="news-card">
+            <div class="news-category">{{ news.category }}</div>
+            <h3><a href="{{ news.url }}" target="_blank">{{ news.title }}</a></h3>
+            <p class="news-summary">{{ news.summary }}</p>
+            <div class="news-footer">
+                <span class="news-source">Source: {{ news.source }}</span>
+                <a href="{{ news.url }}" target="_blank" class="read-more">Read Article ➜</a>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>Unable to load news right now. Please check your internet connection.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .feature-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .header-section {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .section-title {
+        margin: 40px 0 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid var(--border);
+        color: var(--text-primary);
+    }
+
+    .tips-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+    }
+
+    .tip-card {
+        background: var(--card-bg);
+        padding: 25px;
+        border-radius: 15px;
+        text-align: center;
+        box-shadow: var(--shadow);
+        transition: transform 0.2s;
+        border: 1px solid var(--border);
+    }
+
+    .tip-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .tip-icon {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+    }
+
+    .tip-card h4 {
+        margin: 0 0 10px 0;
+        color: var(--primary);
+    }
+
+    .tip-card p {
+        margin: 0;
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    .news-list {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .news-card {
+        background: var(--card-bg);
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: var(--shadow);
+        border-left: 4px solid var(--primary);
+    }
+
+    .news-category {
+        background: var(--bg-tertiary);
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-bottom: 10px;
+    }
+
+    .news-card h3 {
+        margin: 0 0 10px 0;
+    }
+
+    .news-card h3 a {
+        color: var(--text-primary);
+        text-decoration: none;
+    }
+
+    .news-card h3 a:hover {
+        color: var(--primary);
+    }
+
+    .news-summary {
+        color: var(--text-secondary);
+        line-height: 1.6;
+        margin-bottom: 15px;
+    }
+
+    .news-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid var(--border);
+        padding-top: 15px;
+    }
+
+    .news-source {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    .read-more {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+
+    .read-more:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}

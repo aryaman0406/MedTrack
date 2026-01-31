@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% block title %}Water Tracker - MedTrack{% endblock %}
+{% block content %}
+<div class="feature-container">
+    <div class="feature-header">
+        <h1>💧 Water Tracker</h1>
+        <p>Stay hydrated for optimal health</p>
+    </div>
+
+    <!-- Today's Progress -->
+    <div class="water-main-card">
+        <div class="water-circle-container">
+            <div class="water-circle" style="--progress: {{ progress }}%">
+                <div class="water-fill" style="height: {{ progress }}%"></div>
+                <div class="water-info">
+                    <span class="water-count">{{ water_log.glasses }}</span>
+                    <span class="water-goal">/ {{ water_log.goal }} glasses</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="water-controls">
+            <form method="POST" class="water-btn-form">
+                <input type="hidden" name="action" value="remove">
+                <button type="submit" class="water-btn water-btn-remove" {% if water_log.glasses == 0 %}disabled{% endif %}>
+                    ➖
+                </button>
+            </form>
+            
+            <div class="water-glass-icon">🥤</div>
+            
+            <form method="POST" class="water-btn-form">
+                <input type="hidden" name="action" value="add">
+                <button type="submit" class="water-btn water-btn-add">
+                    ➕
+                </button>
+            </form>
+        </div>
+        
+        <p class="water-status">
+            {% if progress >= 100 %}
+                🎉 Goal reached! Great job staying hydrated!
+            {% elif progress >= 75 %}
+                💪 Almost there! Just {{ water_log.goal - water_log.glasses }} more to go!
+            {% elif progress >= 50 %}
+                👍 Halfway there! Keep drinking!
+            {% else %}
+                💧 Start hydrating! You need {{ water_log.goal - water_log.glasses }} more glasses.
+            {% endif %}
+        </p>
+    </div>
+    
+    <!-- Set Goal -->
+    <div class="settings-card">
+        <h3>⚙️ Daily Goal</h3>
+        <form method="POST" class="goal-form">
+            <input type="hidden" name="action" value="set_goal">
+            <div class="goal-input-group">
+                <input type="number" name="goal" value="{{ water_log.goal }}" min="1" max="20" class="goal-input">
+                <span>glasses (250ml each)</span>
+                <button type="submit" class="btn-primary btn-small">Update</button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Weekly Chart -->
+    <div class="chart-card">
+        <h3>📊 This Week</h3>
+        <div class="weekly-chart">
+            {% for day in week_data %}
+            <div class="day-bar">
+                <div class="bar-container">
+                    <div class="bar-fill" style="height: {{ (day.glasses / day.goal * 100) if day.goal else 0 }}%"></div>
+                </div>
+                <span class="day-label">{{ day.date }}</span>
+                <span class="day-value">{{ day.glasses }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Health Tips -->
+    <div class="tips-card">
+        <h3>💡 Hydration Tips</h3>
+        <ul class="tips-list">
+            <li>Drink a glass of water first thing in the morning</li>
+            <li>Keep a water bottle with you throughout the day</li>
+            <li>Set hourly reminders to drink water</li>
+            <li>Eat water-rich foods like fruits and vegetables</li>
+            <li>Drink before, during, and after exercise</li>
+        </ul>
+    </div>
+</div>
+
+<style>
+.feature-container { max-width: 800px; margin: 0 auto; padding: 20px; }
+.feature-header { text-align: center; margin-bottom: 30px; }
+.feature-header h1 { font-size: 2.5rem; margin-bottom: 10px; }
+.feature-header p { color: var(--text-secondary); }
+
+.water-main-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 40px;
+    text-align: center;
+    color: white;
+    margin-bottom: 20px;
+}
+
+.water-circle-container { display: flex; justify-content: center; margin-bottom: 30px; }
+
+.water-circle {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 4px solid rgba(255,255,255,0.5);
+}
+
+.water-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%);
+    transition: height 0.5s ease;
+    border-radius: 0 0 50% 50%;
+}
+
+.water-info {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+}
+
+.water-count { font-size: 3rem; font-weight: bold; display: block; }
+.water-goal { font-size: 1rem; opacity: 0.9; }
+
+.water-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+    margin-bottom: 20px;
+}
+
+.water-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.water-btn:hover:not(:disabled) { transform: scale(1.1); }
+.water-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.water-btn-add { background: #4ade80; color: white; }
+.water-btn-remove { background: #f87171; color: white; }
+.water-glass-icon { font-size: 3rem; }
+.water-status { font-size: 1.1rem; margin-top: 10px; }
+
+.settings-card, .chart-card, .tips-card {
+    background: var(--card-bg);
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+}
+
+.settings-card h3, .chart-card h3, .tips-card h3 {
+    margin-bottom: 15px;
+    color: var(--text-primary);
+}
+
+.goal-form { display: flex; align-items: center; }
+.goal-input-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.goal-input {
+    width: 80px;
+    padding: 10px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.weekly-chart {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    height: 150px;
+    padding-top: 20px;
+}
+
+.day-bar { display: flex; flex-direction: column; align-items: center; flex: 1; }
+.bar-container {
+    width: 30px;
+    height: 100px;
+    background: var(--bg-tertiary);
+    border-radius: 15px;
+    overflow: hidden;
+    position: relative;
+}
+
+.bar-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    transition: height 0.3s;
+}
+
+.day-label { margin-top: 10px; font-size: 0.85rem; color: var(--text-secondary); }
+.day-value { font-weight: bold; color: var(--text-primary); }
+
+.tips-list { list-style: none; padding: 0; }
+.tips-list li {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    padding-left: 25px;
+    position: relative;
+}
+.tips-list li:before { content: "💧"; position: absolute; left: 0; }
+.tips-list li:last-child { border-bottom: none; }
+</style>
+{% endblock %}

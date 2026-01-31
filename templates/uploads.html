@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="bg-white p-6 rounded shadow">
+  <h1 class="text-xl font-bold mb-4">📎 Upload Documents</h1>
+  <form method="POST" enctype="multipart/form-data" class="space-y-4">
+    <input type="file" name="document" required class="w-full">
+    <select name="category" class="w-full border p-2 rounded">
+      <option value="prescription">Prescription</option>
+      <option value="report">Report</option>
+      <option value="bill">Bill</option>
+    </select>
+    <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Upload</button>
+  </form>
+
+  <h2 class="mt-6 font-bold text-lg">Your Files</h2>
+  <ul class="mt-2 space-y-1">
+    {% for f in files %}
+      <li><a href="{{ url_for('uploaded_file', filename=f.filename) }}" target="_blank">{{ f.filename }}</a> ({{ f.category }})</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

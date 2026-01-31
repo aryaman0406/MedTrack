@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+{% block title %}Family Profiles - MedTrack{% endblock %}
+{% block content %}
+<div class="feature-container">
+    <div class="feature-header">
+        <h1>👨‍👩‍👧‍👦 Family Profiles</h1>
+        <p>Manage health information for your loved ones</p>
+    </div>
+
+    <!-- Toggle Add Form -->
+    <div class="controls">
+        <button onclick="document.getElementById('add-member-form').classList.toggle('hidden')" class="btn-primary">
+            ➕ Add Family Member
+        </button>
+    </div>
+
+    <!-- Add Member Form -->
+    <div id="add-member-form" class="form-card hidden">
+        <h3>New Profile</h3>
+        <form method="POST">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" name="name" required placeholder="Name">
+                </div>
+                <div class="form-group">
+                    <label>Relationship *</label>
+                    <select name="relationship" required>
+                        <option value="">Select...</option>
+                        <option value="Spouse">Spouse</option>
+                        <option value="Child">Child</option>
+                        <option value="Parent">Parent</option>
+                        <option value="Sibling">Sibling</option>
+                        <option value="Grandparent">Grandparent</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Age</label>
+                    <input type="number" name="age" min="0" max="120">
+                </div>
+                <div class="form-group">
+                    <label>Blood Group</label>
+                    <select name="blood_group">
+                        <option value="">Unknown</option>
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                    </select>
+                </div>
+                <div class="form-group full-width">
+                    <label>Medical Conditions</label>
+                    <textarea name="conditions" placeholder="e.g. Asthma, Diabetes..."></textarea>
+                </div>
+                <div class="form-group full-width">
+                    <label>Allergies</label>
+                    <textarea name="allergies" placeholder="e.g. Peanuts, Penicillin..."></textarea>
+                </div>
+            </div>
+            <button type="submit" class="btn-primary">Create Profile</button>
+        </form>
+    </div>
+
+    <!-- Profiles List -->
+    <div class="profiles-grid">
+        {% for member in members %}
+        <div class="profile-card">
+            <div class="profile-avatar">
+                {{ member.name[0] | upper }}
+            </div>
+            <div class="profile-content">
+                <div class="profile-header">
+                    <h3>{{ member.name }}</h3>
+                    <span class="relationship-badge">{{ member.relationship }}</span>
+                </div>
+
+                <div class="profile-details">
+                    {% if member.age %}
+                    <div class="detail-item">
+                        <span class="label">Age</span>
+                        <span class="value">{{ member.age }}</span>
+                    </div>
+                    {% endif %}
+                    {% if member.blood_group %}
+                    <div class="detail-item">
+                        <span class="label">Blood</span>
+                        <span class="value">{{ member.blood_group }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if member.conditions or member.allergies %}
+                <div class="medical-info">
+                    {% if member.conditions %}
+                    <div class="info-group">
+                        <span class="info-label">🏥 Conditions:</span>
+                        <p>{{ member.conditions }}</p>
+                    </div>
+                    {% endif %}
+                    {% if member.allergies %}
+                    <div class="info-group">
+                        <span class="info-label">⚠️ Allergies:</span>
+                        <p>{{ member.allergies }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <form method="POST" action="{{ url_for('delete_family_member', id=member.id) }}" class="delete-form">
+                <button type="submit" class="btn-icon" onclick="return confirm('Delete this profile?')">🗑️</button>
+            </form>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>No family profiles added yet.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .feature-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .feature-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .controls {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .form-card {
+        background: var(--card-bg);
+        padding: 25px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
+    }
+
+    .profiles-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
+    .profile-card {
+        background: var(--card-bg);
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow: var(--shadow);
+        display: flex;
+        gap: 20px;
+        position: relative;
+        border: 1px solid var(--border);
+    }
+
+    .profile-avatar {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, var(--primary) 0%, #a855f7 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+    }
+
+    .profile-content {
+        flex: 1;
+    }
+
+    .profile-header {
+        margin-bottom: 15px;
+    }
+
+    .profile-header h3 {
+        margin: 0;
+        font-size: 1.2rem;
+    }
+
+    .relationship-badge {
+        background: var(--bg-tertiary);
+        color: var(--text-secondary);
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.8rem;
+    }
+
+    .profile-details {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .label {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+
+    .value {
+        font-weight: bold;
+    }
+
+    .medical-info {
+        background: var(--bg-secondary);
+        padding: 10px;
+        border-radius: 10px;
+        font-size: 0.9rem;
+    }
+
+    .info-group {
+        margin-bottom: 5px;
+    }
+
+    .info-group:last-child {
+        margin-bottom: 0;
+    }
+
+    .info-label {
+        font-weight: bold;
+        display: block;
+        font-size: 0.8rem;
+    }
+
+    .info-group p {
+        margin: 2px 0 0 0;
+    }
+
+    .delete-form {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+    }
+
+    .btn-icon {
+        background: none;
+        border: none;
+        cursor: pointer;
+        opacity: 0.5;
+        transition: opacity 0.2s;
+    }
+
+    .btn-icon:hover {
+        opacity: 1;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .full-width {
+        grid-column: span 2;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: 10px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+    }
+</style>
+{% endblock %}

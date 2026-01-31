@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+{% block title %}Appointments - MedTrack{% endblock %}
+{% block content %}
+<div class="feature-container">
+    <div class="feature-header">
+        <h1>📅 Appointments</h1>
+        <p>Schedule and manage your doctor visits</p>
+    </div>
+
+    <!-- Add New Appointment -->
+    <div class="form-card">
+        <h3>➕ Schedule New Appointment</h3>
+        <form method="POST" class="appointment-form">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Doctor Name *</label>
+                    <input type="text" name="doctor_name" required placeholder="Dr. Smith">
+                </div>
+                <div class="form-group">
+                    <label>Specialty</label>
+                    <select name="specialty">
+                        <option value="">Select specialty</option>
+                        <option value="General Physician">General Physician</option>
+                        <option value="Cardiologist">Cardiologist</option>
+                        <option value="Dermatologist">Dermatologist</option>
+                        <option value="Orthopedic">Orthopedic</option>
+                        <option value="Pediatrician">Pediatrician</option>
+                        <option value="Gynecologist">Gynecologist</option>
+                        <option value="Neurologist">Neurologist</option>
+                        <option value="Dentist">Dentist</option>
+                        <option value="ENT">ENT Specialist</option>
+                        <option value="Ophthalmologist">Ophthalmologist</option>
+                        <option value="Psychiatrist">Psychiatrist</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Date *</label>
+                    <input type="date" name="date" required>
+                </div>
+                <div class="form-group">
+                    <label>Time *</label>
+                    <input type="time" name="time" required>
+                </div>
+                <div class="form-group full-width">
+                    <label>Location</label>
+                    <input type="text" name="location" placeholder="Hospital/Clinic address">
+                </div>
+                <div class="form-group full-width">
+                    <label>Notes</label>
+                    <textarea name="notes" rows="2" placeholder="Reason for visit, things to discuss..."></textarea>
+                </div>
+            </div>
+            <button type="submit" class="btn-primary">📅 Schedule Appointment</button>
+        </form>
+    </div>
+
+    <!-- Upcoming Appointments -->
+    <div class="appointments-section">
+        <h3>📌 Upcoming Appointments</h3>
+        {% if upcoming %}
+        <div class="appointments-list">
+            {% for appt in upcoming %}
+            <div class="appointment-card upcoming">
+                <div class="appt-date">
+                    <span class="day">{{ appt.date.strftime('%d') }}</span>
+                    <span class="month">{{ appt.date.strftime('%b') }}</span>
+                </div>
+                <div class="appt-details">
+                    <h4>{{ appt.doctor_name }}</h4>
+                    <p class="specialty">{{ appt.specialty or 'General' }}</p>
+                    <p class="time">🕐 {{ appt.time }}</p>
+                    {% if appt.location %}
+                    <p class="location">📍 {{ appt.location }}</p>
+                    {% endif %}
+                    {% if appt.notes %}
+                    <p class="notes">📝 {{ appt.notes }}</p>
+                    {% endif %}
+                </div>
+                <div class="appt-actions">
+                    <form method="POST" action="{{ url_for('delete_appointment', id=appt.id) }}">
+                        <button type="submit" class="btn-danger btn-small"
+                            onclick="return confirm('Delete this appointment?')">🗑️</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="empty-icon">📅</span>
+            <p>No upcoming appointments</p>
+            <p class="subtext">Schedule your next doctor visit above</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Past Appointments -->
+    {% if past %}
+    <div class="appointments-section">
+        <h3>📜 Past Appointments</h3>
+        <div class="appointments-list past">
+            {% for appt in past %}
+            <div class="appointment-card past">
+                <div class="appt-date">
+                    <span class="day">{{ appt.date.strftime('%d') }}</span>
+                    <span class="month">{{ appt.date.strftime('%b') }}</span>
+                </div>
+                <div class="appt-details">
+                    <h4>{{ appt.doctor_name }}</h4>
+                    <p class="specialty">{{ appt.specialty or 'General' }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .feature-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .feature-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .feature-header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+    }
+
+    .form-card {
+        background: var(--card-bg);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: var(--shadow);
+    }
+
+    .form-card h3 {
+        margin-bottom: 20px;
+        color: var(--primary);
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-group.full-width {
+        grid-column: span 2;
+    }
+
+    .form-group label {
+        margin-bottom: 5px;
+        font-weight: 500;
+        color: var(--text-secondary);
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: 12px;
+        border: 2px solid var(--border);
+        border-radius: 10px;
+        font-size: 1rem;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        border-color: var(--primary);
+        outline: none;
+    }
+
+    .appointments-section {
+        margin-bottom: 30px;
+    }
+
+    .appointments-section h3 {
+        margin-bottom: 15px;
+        color: var(--text-primary);
+    }
+
+    .appointments-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .appointment-card {
+        display: flex;
+        align-items: flex-start;
+        background: var(--card-bg);
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: var(--shadow);
+        border-left: 4px solid var(--primary);
+    }
+
+    .appointment-card.upcoming {
+        border-left-color: #4ade80;
+    }
+
+    .appointment-card.past {
+        border-left-color: var(--text-secondary);
+        opacity: 0.7;
+    }
+
+    .appt-date {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: var(--primary);
+        color: white;
+        padding: 15px;
+        border-radius: 10px;
+        margin-right: 20px;
+        min-width: 70px;
+    }
+
+    .appt-date .day {
+        font-size: 1.8rem;
+        font-weight: bold;
+        line-height: 1;
+    }
+
+    .appt-date .month {
+        font-size: 0.9rem;
+        text-transform: uppercase;
+    }
+
+    .appt-details {
+        flex: 1;
+    }
+
+    .appt-details h4 {
+        margin: 0 0 5px 0;
+        color: var(--text-primary);
+        font-size: 1.2rem;
+    }
+
+    .appt-details .specialty {
+        color: var(--primary);
+        font-weight: 500;
+        margin-bottom: 10px;
+    }
+
+    .appt-details .time,
+    .appt-details .location,
+    .appt-details .notes {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        margin: 5px 0;
+    }
+
+    .appt-actions {
+        margin-left: auto;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        background: var(--card-bg);
+        border-radius: 15px;
+    }
+
+    .empty-icon {
+        font-size: 3rem;
+    }
+
+    .empty-state p {
+        margin: 10px 0;
+        color: var(--text-secondary);
+    }
+
+    .empty-state .subtext {
+        font-size: 0.9rem;
+    }
+
+    @media (max-width: 600px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .form-group.full-width {
+            grid-column: span 1;
+        }
+
+        .appointment-card {
+            flex-direction: column;
+        }
+
+        .appt-date {
+            margin-right: 0;
+            margin-bottom: 15px;
+            flex-direction: row;
+            gap: 10px;
+        }
+    }
+</style>
+{% endblock %}
