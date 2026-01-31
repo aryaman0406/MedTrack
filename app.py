@@ -49,6 +49,10 @@ db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
+# Create tables on startup (works with gunicorn in production)
+with app.app_context():
+    db.create_all()
+
 # Initialize the API-free medical web scraper
 medical_scraper = MedicalWebScraper()
 print(f"🚀 MedTrack: Web Scraper Initialized (Wikipedia/MedlinePlus)")
@@ -214,16 +218,22 @@ def load_user(user_id):
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        username = request.form['username']
-        password = generate_password_hash(request.form['password'])
-        if User.query.filter_by(username=username).first():
-            flash("Username already exists", "error")
+        try:
+            username = request.form['username']
+            password = generate_password_hash(request.form['password'])
+            if User.query.filter_by(username=username).first():
+                flash("Username already exists", "error")
+                return redirect(url_for('register'))
+            user = User(username=username, password=password)
+            db.session.add(user)
+            db.session.commit()
+            flash("Registration successful. Please login.", "success")
+            return redirect(url_for("login"))
+        except Exception as e:
+            db.session.rollback()
+            print(f"Registration error: {e}")
+            flash("Registration failed. Please try again.", "error")
             return redirect(url_for('register'))
-        user = User(username=username, password=password)
-        db.session.add(user)
-        db.session.commit()
-        flash("Registration successful. Please login.", "success")
-        return redirect(url_for("login"))
     return render_template("register.html")
 
 @app.route("/login", methods=["GET", "POST"])
