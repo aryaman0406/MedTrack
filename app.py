@@ -12,6 +12,10 @@ import cv2
 import numpy as np
 import os
 import traceback
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 from flask import make_response
 from weasyprint import HTML
@@ -30,7 +34,13 @@ app = Flask(__name__)
 
 # Production-ready configuration
 app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///meds.db')
+
+# Database configuration (supports Supabase PostgreSQL)
+database_url = os.getenv('DATABASE_URL', 'sqlite:///meds.db')
+# Fix for Supabase/Heroku postgres:// URLs (SQLAlchemy requires postgresql://)
+if database_url.startswith('postgres://'):
+    database_url = database_url.replace('postgres://', 'postgresql://', 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
