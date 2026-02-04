@@ -7,8 +7,6 @@ from datetime import datetime, date, timedelta
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import LabelEncoder
 from collections import Counter
-import pytesseract
-import cv2
 import numpy as np
 import os
 import traceback
@@ -18,7 +16,22 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from flask import make_response
-from weasyprint import HTML
+
+# Optional imports for OCR and PDF (may not work in all environments)
+try:
+    import pytesseract
+    import cv2
+    OCR_AVAILABLE = True
+except ImportError:
+    OCR_AVAILABLE = False
+    print("⚠️ OCR not available: pytesseract/cv2 not installed")
+
+try:
+    from weasyprint import HTML
+    PDF_AVAILABLE = True
+except (ImportError, OSError) as e:
+    PDF_AVAILABLE = False
+    print(f"⚠️ PDF export not available: {e}")
 
 # API-Free Web Scraper for real-time medical data
 from web_scraper import (
@@ -48,10 +61,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
-
-# Create tables on startup (works with gunicorn in production)
-with app.app_context():
-    db.create_all()
 
 # Initialize the API-free medical web scraper
 medical_scraper = MedicalWebScraper()
@@ -178,6 +187,15 @@ class HealthNews(db.Model):
     category = db.Column(db.String(50))
     fetched_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+# Create tables on startup (works with gunicorn in production)
+# Must be after all models are defined
+with app.app_context():
+    try:
+        db.create_all()
+        print("✅ Database tables created successfully")
+    except Exception as e:
+        print(f"⚠️ Database initialization warning: {e}")
+
 def predict_missed_reminders(reminders):
     if not reminders:
         return []
@@ -249,6 +267,9 @@ def login():
 @app.route("/export/pdf")
 @login_required
 def export_pdf():
+    if not PDF_AVAILABLE:
+        flash("PDF export is not available in this environment.", "error")
+        return redirect(url_for("dashboard"))
     user = current_user
     reminders = Reminder.query.filter_by(user_id=user.id).all()
     symptoms = SymptomLog.query.filter_by(user_id=user.id).all()
@@ -480,6 +501,9 @@ def chatbot():
 def ocr_upload():
     extracted_text = ""
     if request.method == "POST":
+        if not OCR_AVAILABLE:
+            flash("OCR is not available in this environment.", "error")
+            return render_template("ocr_upload.html", extracted_text=extracted_text)
         f = request.files['image']
         filename = secure_filename(f.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)

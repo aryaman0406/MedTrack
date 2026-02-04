@@ -8,9 +8,7 @@ services:
   - type: web
     name: medication-tracker
     runtime: python
-    buildCommand: |
-      pip install -r requirements.txt
-      apt-get update && apt-get install -y tesseract-ocr
+    buildCommand: ./build.sh
     startCommand: gunicorn app:app
     envVars:
       - key: DATABASE_URL
