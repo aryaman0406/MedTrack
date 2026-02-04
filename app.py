@@ -68,8 +68,8 @@ print(f"🚀 MedTrack: Web Scraper Initialized (Wikipedia/MedlinePlus)")
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(150), unique=True)
-    password = db.Column(db.String(150))
+    username = db.Column(db.String(150), unique=True, nullable=False)
+    password = db.Column(db.String(256), nullable=False)  # Increased for password hashes
     name = db.Column(db.String(150))
     age = db.Column(db.Integer)
     height_cm = db.Column(db.Float)
@@ -237,11 +237,18 @@ def load_user(user_id):
 def register():
     if request.method == "POST":
         try:
-            username = request.form['username']
-            password = generate_password_hash(request.form['password'])
+            username = request.form.get('username', '').strip()
+            password_raw = request.form.get('password', '')
+            
+            if not username or not password_raw:
+                flash("Username and password are required", "error")
+                return redirect(url_for('register'))
+            
             if User.query.filter_by(username=username).first():
                 flash("Username already exists", "error")
                 return redirect(url_for('register'))
+            
+            password = generate_password_hash(password_raw)
             user = User(username=username, password=password)
             db.session.add(user)
             db.session.commit()
@@ -250,6 +257,7 @@ def register():
         except Exception as e:
             db.session.rollback()
             print(f"Registration error: {e}")
+            traceback.print_exc()
             flash("Registration failed. Please try again.", "error")
             return redirect(url_for('register'))
     return render_template("register.html")
