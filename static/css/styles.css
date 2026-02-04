@@ -268,19 +268,34 @@ html.dark .navbar {
   left: 1.5rem;
   top: 5rem;
   bottom: 1.5rem;
-  width: 260px;
+  width: 220px;
   background: var(--bg-card);
   border-radius: 2rem;
   border: 1px solid var(--border-soft);
-  padding: 2rem 1.25rem;
-  display: flex;
+  padding: 1.5rem 1rem;
   flex-direction: column;
   gap: 0.5rem;
   box-shadow: var(--shadow-premium);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.side-nav p {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.side-nav .nav-link {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
 }
 
 .main-content {
-  margin-left: 290px;
+  margin-left: 250px;
   padding-top: 2rem;
 }
 
