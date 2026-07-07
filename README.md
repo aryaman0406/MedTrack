@@ -2,7 +2,6 @@
 
 ![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.8+-green.svg)
-![License](https://img.shields.io/badge/license-MIT-lightgrey.svg)
 ![Privacy](https://img.shields.io/badge/privacy-100%25_Local-red.svg)
 
 **MedTrack** is a premium, privacy-focused health management system built to solve real-world medical challenges without relying on external paid APIs. It combines advanced web scraping, machine learning, and a stunning "human-made" design to provide a world-class health companion.
