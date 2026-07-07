@@ -160,18 +160,24 @@
   <script>
     // Theme Toggle Logic
     const themeBtn = document.getElementById('themeToggle');
-    themeBtn.addEventListener('click', () => {
-      const isDark = document.documentElement.classList.toggle('dark');
-      localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    });
+    if (themeBtn) {
+      themeBtn.addEventListener('click', () => {
+        const isDark = document.documentElement.classList.toggle('dark');
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      });
+    }
 
     // Mobile Menu Logic
     const mobileBtn = document.getElementById('mobileMenuBtn');
     const closeBtn = document.getElementById('closeMobileMenu');
     const mobileMenu = document.getElementById('mobileMenu');
 
-    mobileBtn.addEventListener('click', () => mobileMenu.classList.remove('hidden'));
-    closeBtn.addEventListener('click', () => mobileMenu.classList.add('hidden'));
+    if (mobileBtn && mobileMenu) {
+      mobileBtn.addEventListener('click', () => mobileMenu.classList.remove('hidden'));
+    }
+    if (closeBtn && mobileMenu) {
+      closeBtn.addEventListener('click', () => mobileMenu.classList.add('hidden'));
+    }
 
     // Notification System
     document.addEventListener("DOMContentLoaded", () => {
@@ -179,7 +185,7 @@
         Notification.requestPermission();
       }
 
-      {% if risk_alerts %}
+      {% if risk_alerts is defined and risk_alerts %}
       {% for r, p in risk_alerts %}
       new Notification("⚠️ Medication Risk", {
         body: "You might miss {{ r.name }} (Risk Score: {{ '%.1f' % (p*100) }}%)",

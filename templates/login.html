@@ -1,12 +1,72 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="card">
-    <h1 class="text-2xl mb-4 font-bold">Login</h1>
-    <form method="POST" class="space-y-4">
-        <input name="username" placeholder="Username" required class="w-full p-2 border rounded">
-        <input name="password" placeholder="Password" type="password" required class="w-full p-2 border rounded">
-        <button type="submit" class="button">Login</button>
-    </form>
-    <a href="{{ url_for('register') }}" class="text-blue-500 text-sm mt-2 inline-block">Don't have an account?</a>
+<div class="min-h-[80vh] flex items-center justify-center px-4">
+    <div class="w-full max-w-md">
+        <div class="card p-8 md:p-10">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-gradient-to-tr from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 shadow-lg">
+                    💊
+                </div>
+                <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-2" style="font-family: 'Outfit', sans-serif;">Welcome Back</h1>
+                <p class="text-gray-500 dark:text-gray-400">Sign in to your MedTrack account</p>
+            </div>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="mb-6 space-y-2">
+                {% for category, message in messages %}
+                <div class="p-3 rounded-xl text-sm font-medium
+                    {% if category == 'success' %}bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800
+                    {% elif category == 'error' %}bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800
+                    {% else %}bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800{% endif %}">
+                    {% if category == 'success' %}✅{% elif category == 'error' %}❌{% else %}🔔{% endif %} {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            <!-- Login Form -->
+            <form method="POST" class="space-y-5">
+                <div>
+                    <label for="username" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Username</label>
+                    <input 
+                        id="username"
+                        name="username" 
+                        type="text"
+                        placeholder="Enter your username" 
+                        required 
+                        autocomplete="username"
+                        class="form-control"
+                    >
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Password</label>
+                    <input 
+                        id="password"
+                        name="password" 
+                        type="password"
+                        placeholder="Enter your password" 
+                        required 
+                        autocomplete="current-password"
+                        class="form-control"
+                    >
+                </div>
+                <button type="submit" class="btn btn-primary w-full py-3 text-base">
+                    Sign In →
+                </button>
+            </form>
+
+            <!-- Footer -->
+            <div class="text-center mt-6 pt-6 border-t border-gray-100 dark:border-slate-700">
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    Don't have an account? 
+                    <a href="{{ url_for('register') }}" class="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">Create one</a>
+                </p>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

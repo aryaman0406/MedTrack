@@ -60,11 +60,10 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
-login_manager.login_view = 'login'
-
+login_manager.login_view = 'login'   
 # Initialize the API-free medical web scraper
 medical_scraper = MedicalWebScraper()
-print(f"🚀 MedTrack: Web Scraper Initialized (Wikipedia/MedlinePlus)")
+print("MedTrack: Web Scraper Initialized (Wikipedia/MedlinePlus)")
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -192,9 +191,9 @@ class HealthNews(db.Model):
 with app.app_context():
     try:
         db.create_all()
-        print("✅ Database tables created successfully")
+        print("Database tables created successfully")
     except Exception as e:
-        print(f"⚠️ Database initialization warning: {e}")
+        print(f"Database initialization warning: {e}")
 
 def predict_missed_reminders(reminders):
     if not reminders:
@@ -265,8 +264,15 @@ def register():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        user = User.query.filter_by(username=request.form['username']).first()
-        if user and check_password_hash(user.password, request.form['password']):
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        
+        if not username or not password:
+            flash("Username and password are required", "error")
+            return redirect(url_for('login'))
+        
+        user = User.query.filter_by(username=username).first()
+        if user and check_password_hash(user.password, password):
             login_user(user)
             return redirect(url_for("dashboard"))
         flash("Invalid credentials", "error")
@@ -476,11 +482,11 @@ def chatbot():
             print(f"Processing question: {question}")
             
             # Use API-free web scraper for real-time medical information
-            print("🌐 Fetching real-time data from medical websites...")
+            print("Fetching real-time data from medical websites...")
             result = get_medical_info(question, medical_scraper)
             reply = f"🩺 **Medical Information** (Real-time Web Data):\n\n{result}"
             sources_text = "Wikipedia, MedlinePlus, Medical Database"
-            print("✅ Successfully fetched medical information")
+            print("Successfully fetched medical information")
             
             # Save to chat history
             try:
@@ -642,7 +648,7 @@ def symptom_checker():
         
         if symptoms:
             try:
-                print(f"🌐 Analyzing symptoms: {symptoms}")
+                print(f"Analyzing symptoms: {symptoms}")
                 
                 # Use API-free web scraper for symptom analysis
                 diagnosis, risk_level, recommendations = scraper_analyze_symptoms(
@@ -658,7 +664,7 @@ def symptom_checker():
                 except Exception as web_error:
                     print(f"Web scraping error: {web_error}")
                 
-                print(f"✅ Symptom analysis complete - Risk: {risk_level}")
+                print(f"Symptom analysis complete - Risk: {risk_level}")
                 
             except Exception as e:
                 print(f"Symptom analysis error: {e}")
@@ -690,7 +696,7 @@ def drug_interactions():
         
         if len(medications) >= 2:
             try:
-                print(f"🌐 Checking drug interactions for: {medications}")
+                print(f"Checking drug interactions for: {medications}")
                 
                 # Use API-free web scraper for drug interaction analysis
                 interactions, risk_level = scraper_check_drug_interactions(medications)
@@ -704,7 +710,7 @@ def drug_interactions():
                 except Exception as web_error:
                     print(f"Web scraping error: {web_error}")
                 
-                print(f"✅ Drug interaction check complete - Risk: {risk_level}")
+                print(f"Drug interaction check complete - Risk: {risk_level}")
                 
             except Exception as e:
                 print(f"Drug interaction analysis error: {e}")
