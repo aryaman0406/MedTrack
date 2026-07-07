@@ -1,10 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="bg-white p-6 rounded shadow">
-  <h1 class="text-2xl font-bold mb-4">💊 Drug Interaction Checker</h1>
+<div class="card p-6 md:p-8 max-w-4xl mx-auto">
+  <h1 class="text-3xl font-extrabold mb-6 text-gray-900 dark:text-white flex items-center gap-2">
+    <span>💊</span> Drug Interaction Checker
+  </h1>
   
-  <div class="mb-6 p-4 bg-purple-50 border-l-4 border-purple-400 rounded">
-    <p class="text-purple-800">
+  <div class="mb-8 p-5 bg-purple-50 dark:bg-purple-950/20 border-l-4 border-purple-400 dark:border-purple-500 rounded-2xl">
+    <p class="text-purple-800 dark:text-purple-200 font-medium">
       <strong>ℹ️ Check for interactions:</strong> Enter medications to check for potential interactions, 
       side effects, and safety concerns. Always consult your pharmacist or doctor for professional advice.
     </p>
@@ -12,21 +14,21 @@
 
   <form method="POST" class="space-y-6">
     <!-- Medication Input -->
-    <div>
-      <label class="block text-lg font-semibold mb-3">Enter Medications (separated by commas):</label>
-      <textarea name="medications" class="w-full border p-3 rounded" rows="3"
+    <div class="space-y-2">
+      <label class="block text-lg font-bold text-gray-900 dark:text-white">Enter Medications (separated by commas):</label>
+      <textarea name="medications" class="form-control" rows="3"
                 placeholder="e.g., Aspirin, Warfarin, Metformin, Lisinopril..."></textarea>
-      <p class="text-sm text-gray-600 mt-1">Enter at least 2 medications to check for interactions</p>
+      <p class="text-sm text-gray-500 dark:text-gray-400">Enter at least 2 medications to check for interactions</p>
     </div>
 
     <!-- Quick Add from Current Medications -->
     {% if user_medications %}
-    <div>
-      <label class="block font-semibold mb-2">Quick Add from Your Current Medications:</label>
+    <div class="space-y-2">
+      <label class="block text-md font-bold text-gray-900 dark:text-white">Quick Add from Your Current Medications:</label>
       <div class="flex flex-wrap gap-2">
         {% for med in user_medications %}
         <button type="button" onclick="addMedication('{{ med }}')" 
-                class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm hover:bg-blue-200">
+                class="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-900/30 px-4 py-1.5 rounded-full text-sm font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors">
           + {{ med }}
         </button>
         {% endfor %}
@@ -35,87 +37,91 @@
     {% endif %}
 
     <!-- Common Drug Categories -->
-    <div>
-      <label class="block font-semibold mb-2">Common Medication Categories:</label>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+    <div class="space-y-2">
+      <label class="block text-md font-bold text-gray-900 dark:text-white">Common Medication Categories:</label>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
         <button type="button" onclick="addMedication('Blood Thinner')" 
-                class="bg-gray-100 px-3 py-2 rounded text-sm hover:bg-gray-200">
+                class="btn btn-secondary py-2.5 rounded-xl border border-border-soft text-sm">
           🩸 Blood Thinners
         </button>
         <button type="button" onclick="addMedication('Blood Pressure Medication')" 
-                class="bg-gray-100 px-3 py-2 rounded text-sm hover:bg-gray-200">
+                class="btn btn-secondary py-2.5 rounded-xl border border-border-soft text-sm">
           💓 Blood Pressure
         </button>
         <button type="button" onclick="addMedication('Diabetes Medication')" 
-                class="bg-gray-100 px-3 py-2 rounded text-sm hover:bg-gray-200">
+                class="btn btn-secondary py-2.5 rounded-xl border border-border-soft text-sm">
           🍯 Diabetes
         </button>
         <button type="button" onclick="addMedication('Pain Reliever')" 
-                class="bg-gray-100 px-3 py-2 rounded text-sm hover:bg-gray-200">
+                class="btn btn-secondary py-2.5 rounded-xl border border-border-soft text-sm">
           💊 Pain Relief
         </button>
       </div>
     </div>
 
-    <button type="submit" class="w-full bg-purple-500 text-white py-3 rounded-lg hover:bg-purple-600 transition">
+    <button type="submit" class="btn btn-primary w-full py-4 text-lg bg-purple-600 hover:bg-purple-700 shadow-purple-600/30">
       🔍 Check Interactions
     </button>
   </form>
 
   {% if interactions %}
-  <div class="mt-8 space-y-4">
+  <div class="mt-10 space-y-6 border-t border-border-soft pt-8">
     <!-- Risk Level Indicator -->
-    <div class="p-4 rounded-lg border-l-4 
-                {% if risk_level == 'High' %}border-red-500 bg-red-50{% elif risk_level == 'Medium' %}border-yellow-500 bg-yellow-50{% else %}border-green-500 bg-green-50{% endif %}">
+    <div class="p-5 rounded-2xl border-l-4 
+                {% if risk_level == 'High' %}border-red-500 bg-red-50 dark:bg-red-950/20 text-red-900 dark:text-red-300{% elif risk_level == 'Medium' %}border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20 text-yellow-900 dark:text-yellow-300{% else %}border-green-500 bg-green-50 dark:bg-green-950/20 text-green-900 dark:text-green-300{% endif %}">
       <div class="flex items-center">
-        <span class="text-2xl mr-2">
+        <span class="text-3xl mr-4">
           {% if risk_level == 'High' %}⚠️{% elif risk_level == 'Medium' %}⚠️{% else %}✅{% endif %}
         </span>
         <div>
-          <h3 class="font-bold text-lg">Interaction Risk: {{ risk_level }}</h3>
+          <h3 class="font-extrabold text-xl mb-1">Interaction Risk: {{ risk_level }}</h3>
           {% if risk_level == 'High' %}
-          <p class="text-red-700">Potentially serious interactions detected. Consult your doctor immediately.</p>
+          <p class="font-medium">Potentially serious interactions detected. Consult your doctor immediately.</p>
           {% elif risk_level == 'Medium' %}
-          <p class="text-yellow-700">Moderate interactions possible. Monitor closely and consult your pharmacist.</p>
+          <p class="font-medium">Moderate interactions possible. Monitor closely and consult your pharmacist.</p>
           {% else %}
-          <p class="text-green-700">No major interactions found, but always verify with healthcare professionals.</p>
+          <p class="font-medium">No major interactions found, but always verify with healthcare professionals.</p>
           {% endif %}
         </div>
       </div>
     </div>
 
     <!-- Interaction Analysis -->
-    <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg transition-colors duration-300">
-      <h3 class="font-bold text-lg mb-2 text-gray-900 dark:text-gray-100">🔬 Interaction Analysis:</h3>
-      <div class="whitespace-pre-wrap text-gray-900 dark:text-gray-100 font-medium leading-relaxed">{{ interactions }}</div>
+    <div class="bg-gray-50 dark:bg-slate-800/50 p-6 border border-border-soft rounded-2xl transition-colors duration-300">
+      <h3 class="font-bold text-xl mb-4 text-gray-900 dark:text-white flex items-center gap-2">
+        <span>🔬</span> Interaction Analysis:
+      </h3>
+      <div class="whitespace-pre-wrap text-slate-800 dark:text-slate-200 font-medium leading-relaxed">{{ interactions }}</div>
     </div>
 
     <!-- Action Buttons -->
-    <div class="flex flex-wrap gap-3">
-      <button onclick="printReport()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+    <div class="flex flex-wrap gap-4">
+      <button onclick="printReport()" class="btn btn-primary px-6 py-3 rounded-2xl">
         🖨️ Print Report
       </button>
-      <button onclick="emailToDoctor()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+      <button onclick="emailToDoctor()" class="btn btn-secondary px-6 py-3 rounded-2xl border border-border-soft">
         📧 Email to Doctor
       </button>
-      <button onclick="saveToProfile()" class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600">
+      <button onclick="saveToProfile()" class="btn btn-secondary bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/10 dark:hover:bg-purple-900/20 text-purple-700 dark:text-purple-300 border border-purple-100 dark:border-purple-900/30 px-6 py-3 rounded-2xl">
         💾 Save to Profile
       </button>
     </div>
 
     <!-- Emergency Contact -->
     {% if risk_level == 'High' %}
-    <div class="bg-red-100 border border-red-400 p-4 rounded-lg">
-      <h3 class="font-bold text-red-800 text-lg mb-2">🚨 High Risk Interaction Detected</h3>
-      <p class="text-red-700 mb-3">
+    <div class="bg-red-50 dark:bg-red-950/10 border border-red-200 dark:border-red-900/30 p-6 rounded-2xl text-red-900 dark:text-red-300">
+      <h3 class="font-bold text-xl mb-2 flex items-center gap-2 text-red-800 dark:text-red-400">
+        <span>🚨</span> High Risk Interaction Detected
+      </h3>
+      <p class="font-medium mb-4">
         Serious drug interactions have been identified. Do not take these medications together 
         without consulting your healthcare provider immediately.
       </p>
-      <div class="flex space-x-3">
-        <a href="tel:911" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+      <div class="flex space-x-4">
+        <a href="tel:911" class="btn btn-primary bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-2xl shadow-lg shadow-red-600/30">
           🚨 Emergency: 911
         </a>
-        <a href="tel:311" class="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600">
+        <a href="tel:311" class="btn btn-secondary px-6 py-3 rounded-2xl border border-red-200 dark:border-red-900/30">
           ☎️ Poison Control
         </a>
       </div>
@@ -125,9 +131,11 @@
   {% endif %}
 
   <!-- Educational Information -->
-  <div class="mt-8 bg-blue-50 p-4 rounded-lg">
-    <h3 class="font-bold text-lg mb-2">📚 Drug Interaction Facts:</h3>
-    <ul class="list-disc list-inside space-y-1 text-sm">
+  <div class="mt-12 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 p-6 rounded-2xl text-blue-900 dark:text-blue-200">
+    <h3 class="font-bold text-xl mb-4 flex items-center gap-2">
+      <span>📚</span> Drug Interaction Facts:
+    </h3>
+    <ul class="list-disc list-inside space-y-2 font-medium">
       <li>Drug interactions can increase or decrease medication effectiveness</li>
       <li>Some interactions can cause serious side effects or toxicity</li>
       <li>Always inform your doctor and pharmacist of ALL medications you're taking</li>
@@ -137,9 +145,9 @@
   </div>
 
   <!-- Medical Disclaimer -->
-  <div class="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-sm">
-    <p><strong>⚠️ Important Disclaimer:</strong></p>
-    <ul class="list-disc list-inside mt-2 space-y-1">
+  <div class="mt-8 p-5 bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 dark:border-yellow-500 rounded-r-2xl text-sm text-yellow-900 dark:text-yellow-200">
+    <p class="font-bold mb-2">⚠️ Important Disclaimer:</p>
+    <ul class="list-disc list-inside space-y-1.5 font-medium">
       <li>This tool provides general information only and is not a substitute for professional medical advice</li>
       <li>Always consult your doctor, pharmacist, or healthcare provider before making medication changes</li>
       <li>Drug interactions can vary based on individual factors like age, weight, and health conditions</li>

@@ -1,21 +1,38 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="bg-white p-6 rounded shadow">
-  <h1 class="text-xl font-bold mb-4">📎 Upload Documents</h1>
-  <form method="POST" enctype="multipart/form-data" class="space-y-4">
-    <input type="file" name="document" required class="w-full">
-    <select name="category" class="w-full border p-2 rounded">
-      <option value="prescription">Prescription</option>
-      <option value="report">Report</option>
-      <option value="bill">Bill</option>
-    </select>
-    <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Upload</button>
+<div class="card p-6 md:p-8 max-w-2xl mx-auto">
+  <h1 class="text-3xl font-extrabold mb-6 text-gray-900 dark:text-white flex items-center gap-2">
+    <span>📎</span> Upload Documents
+  </h1>
+  <form method="POST" enctype="multipart/form-data" class="space-y-5 mb-8">
+    <div class="space-y-2">
+      <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Select Document File</label>
+      <input type="file" name="document" required class="form-control">
+    </div>
+    <div class="space-y-2">
+      <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Category</label>
+      <select name="category" class="form-control">
+        <option value="prescription">Prescription</option>
+        <option value="report">Report</option>
+        <option value="bill">Bill</option>
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary w-full py-3.5">Upload File</button>
   </form>
 
-  <h2 class="mt-6 font-bold text-lg">Your Files</h2>
-  <ul class="mt-2 space-y-1">
+  <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">Your Deployed Documents</h2>
+  <ul class="space-y-3">
     {% for f in files %}
-      <li><a href="{{ url_for('uploaded_file', filename=f.filename) }}" target="_blank">{{ f.filename }}</a> ({{ f.category }})</li>
+      <li class="bg-gray-50 dark:bg-slate-800/50 p-4 border border-border-soft rounded-2xl flex items-center justify-between text-slate-800 dark:text-slate-200">
+        <a href="{{ url_for('uploaded_file', filename=f.filename) }}" target="_blank" class="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
+          {{ f.filename }}
+        </a>
+        <span class="px-3 py-1 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 rounded-full text-xs font-bold uppercase tracking-wider">
+          {{ f.category }}
+        </span>
+      </li>
+    {% else %}
+      <p class="text-gray-500 dark:text-gray-400 text-center py-4">No uploaded files found.</p>
     {% endfor %}
   </ul>
 </div>

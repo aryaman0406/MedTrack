@@ -1,9 +1,3 @@
-databases:
-  - name: meds-db
-    databaseName: meds
-    user: meds_user
-    plan: free
-
 services:
   - type: web
     name: medication-tracker
@@ -12,9 +6,7 @@ services:
     startCommand: gunicorn app:app
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: meds-db
-          property: connectionString
+        sync: false  # Set manually in Render dashboard → Environment (paste your Supabase pooler URL)
       - key: SECRET_KEY
         generateValue: true
       - key: PYTHON_VERSION

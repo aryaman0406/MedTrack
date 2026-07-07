@@ -49,10 +49,25 @@ app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
 
 # Database configuration (supports Supabase PostgreSQL)
-database_url = os.getenv('DATABASE_URL', 'sqlite:///meds.db')
-# Fix for Supabase/Heroku postgres:// URLs (SQLAlchemy requires postgresql://)
+import re as _re
+
+database_url = os.getenv('DATABASE_URL')
+if not database_url:
+    raise RuntimeError(
+        "DATABASE_URL environment variable is not set. "
+        "In production, add it in the Render dashboard → Environment. "
+        "Locally, add it to your .env file."
+    )
+
+# Normalize Supabase/Heroku legacy postgres:// scheme to postgresql://
+# (SQLAlchemy requires postgresql://, not postgres://)
 if database_url.startswith('postgres://'):
     database_url = database_url.replace('postgres://', 'postgresql://', 1)
+
+# Log the resolved URL at startup (password masked) so Render logs show the real user/host
+_masked_url = _re.sub(r'(:)[^:@]+(@)', r'\1****\2', database_url)
+print(f"🔗 Connecting to database: {_masked_url}")
+
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
@@ -66,6 +81,7 @@ medical_scraper = MedicalWebScraper()
 print("MedTrack: Web Scraper Initialized (Wikipedia/MedlinePlus)")
 
 class User(UserMixin, db.Model):
+    __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(256), nullable=False)  # Increased for password hashes
@@ -86,25 +102,25 @@ class Reminder(db.Model):
     time_taken = db.Column(db.String(20), nullable=True)
     expiry_date = db.Column(db.Date, nullable=True)  # Medication expiry tracking
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
 class Document(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(200))
     category = db.Column(db.String(50))  
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
 class SymptomLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.String(20))
     symptom = db.Column(db.String(200))
     severity = db.Column(db.Integer)  
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
 class SideEffect(db.Model):
     """Track medication side effects"""
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     medication_name = db.Column(db.String(150))
     side_effect = db.Column(db.String(200))
     severity = db.Column(db.Integer)  # 1=Mild, 2=Moderate, 3=Severe
@@ -114,7 +130,7 @@ class SideEffect(db.Model):
 
 class ChatHistory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     question = db.Column(db.Text)
     answer = db.Column(db.Text)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
@@ -125,7 +141,7 @@ class ChatHistory(db.Model):
 class WaterLog(db.Model):
     """Track daily water intake"""
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     date = db.Column(db.Date, default=date.today)
     glasses = db.Column(db.Integer, default=0)  # Number of glasses (250ml each)
     goal = db.Column(db.Integer, default=8)  # Daily goal
@@ -134,7 +150,7 @@ class WaterLog(db.Model):
 class Appointment(db.Model):
     """Doctor appointments scheduler"""
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     doctor_name = db.Column(db.String(150))
     specialty = db.Column(db.String(100))
     date = db.Column(db.Date)
@@ -147,7 +163,7 @@ class Appointment(db.Model):
 class EmergencyContact(db.Model):
     """Emergency/ICE contacts"""
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     name = db.Column(db.String(150))
     relationship = db.Column(db.String(50))
     phone = db.Column(db.String(20))
@@ -157,7 +173,7 @@ class EmergencyContact(db.Model):
 class FamilyMember(db.Model):
     """Family member profiles for health tracking"""
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # Parent account
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))  # Parent account
     name = db.Column(db.String(150))
     relationship = db.Column(db.String(50))
     age = db.Column(db.Integer)
@@ -168,7 +184,7 @@ class FamilyMember(db.Model):
 class UserStreak(db.Model):
     """Gamification - track medication adherence streaks"""
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     current_streak = db.Column(db.Integer, default=0)
     longest_streak = db.Column(db.Integer, default=0)
     total_days_tracked = db.Column(db.Integer, default=0)

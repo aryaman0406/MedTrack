@@ -1,17 +1,39 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="bg-white p-6 rounded shadow">
-  <h1 class="text-xl font-bold mb-4">🩺 Symptom Tracker</h1>
-  <form method="POST" class="space-y-4">
-    <input type="date" name="date" required class="w-full border p-2 rounded">
-    <input name="symptom" placeholder="Symptom description" class="w-full border p-2 rounded">
-    <input type="number" name="severity" placeholder="Severity (1–10)" class="w-full border p-2 rounded">
-    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Add Log</button>
+<div class="card p-6 md:p-8 max-w-2xl mx-auto">
+  <h1 class="text-3xl font-extrabold mb-6 text-gray-900 dark:text-white flex items-center gap-2">
+    <span>🩺</span> Symptom Tracker
+  </h1>
+  <form method="POST" class="space-y-5 mb-8">
+    <div class="space-y-2">
+      <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Date</label>
+      <input type="date" name="date" required class="form-control">
+    </div>
+    <div class="space-y-2">
+      <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Symptom Description</label>
+      <input name="symptom" placeholder="e.g. Throbbing head headache" required class="form-control">
+    </div>
+    <div class="space-y-2">
+      <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Severity (1–10)</label>
+      <input type="number" name="severity" min="1" max="10" placeholder="Severity (1–10)" required class="form-control">
+    </div>
+    <button type="submit" class="btn btn-primary w-full py-3.5">Add Log Entry</button>
   </form>
 
-  <ul class="mt-6 space-y-2">
+  <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">Recent Log Entries</h2>
+  <ul class="space-y-3">
     {% for log in logs %}
-      <li class="bg-gray-100 p-3 rounded">{{ log.date }} - {{ log.symptom }} ({{ log.severity }}/10)</li>
+      <li class="bg-gray-50 dark:bg-slate-800/50 p-4 border border-border-soft rounded-2xl flex items-center justify-between text-slate-800 dark:text-slate-200">
+        <div>
+          <span class="font-bold text-sm text-gray-500 dark:text-gray-400 block mb-1">{{ log.date }}</span>
+          <span class="font-medium text-lg">{{ log.symptom }}</span>
+        </div>
+        <span class="px-3 py-1 rounded-full text-xs font-bold {% if log.severity|int >= 7 %}bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300{% elif log.severity|int >= 4 %}bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300{% else %}bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300{% endif %}">
+          {{ log.severity }}/10
+        </span>
+      </li>
+    {% else %}
+      <p class="text-gray-500 dark:text-gray-400 text-center py-4">No symptom logs found.</p>
     {% endfor %}
   </ul>
 </div>
