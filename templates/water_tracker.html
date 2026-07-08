@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Water Tracker - MedTrack{% endblock %}
 {% block content %}
-<div class="feature-container">
+<div class="page-container">
     <div class="feature-header">
         <h1>💧 Water Tracker</h1>
         <p>Stay hydrated for optimal health</p>
@@ -93,17 +93,14 @@
 </div>
 
 <style>
-.feature-container { max-width: 800px; margin: 0 auto; padding: 20px; }
-.feature-header { text-align: center; margin-bottom: 30px; }
-.feature-header h1 { font-size: 2.5rem; margin-bottom: 10px; }
-.feature-header p { color: var(--text-secondary); }
-
 .water-main-card {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-radius: 20px;
     padding: 40px;
     text-align: center;
-    color: white;
+    /* White text is always correct here: this card uses a fixed deep-purple
+       gradient as background regardless of theme, so white always contrasts. */
+    color: var(--text-on-primary);
     margin-bottom: 20px;
 }
 
@@ -161,8 +158,8 @@
 
 .water-btn:hover:not(:disabled) { transform: scale(1.1); }
 .water-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.water-btn-add { background: #4ade80; color: white; }
-.water-btn-remove { background: #f87171; color: white; }
+.water-btn-add { background: #4ade80; color: var(--text-on-primary); }
+.water-btn-remove { background: #f87171; color: var(--text-on-primary); }
 .water-glass-icon { font-size: 3rem; }
 .water-status { font-size: 1.1rem; margin-top: 10px; }
 
@@ -188,6 +185,8 @@
     border-radius: 10px;
     font-size: 1.2rem;
     text-align: center;
+    background: var(--bg-main);
+    color: var(--text-main);
 }
 
 .weekly-chart {

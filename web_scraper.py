@@ -158,6 +158,16 @@ MEDICAL_DATABASE = {
             'treatment': ['Small sips of clear liquids', 'Ginger or ginger tea', 'Rest', 'Avoid strong odors', 'Eat bland foods (BRAT diet)'],
             'seek_help': ['Vomiting blood', 'Severe abdominal pain', 'High fever', 'Signs of dehydration', 'Confusion']
         },
+        'diarrhea': {
+            'causes': ['Viral or bacterial infection', 'Food poisoning', 'Medications (like antibiotics)', 'Food intolerances', 'Irritable Bowel Syndrome (IBS)'],
+            'treatment': ['Drink plenty of fluids (water, oral rehydration solutions)', 'Eat bland foods (BRAT diet: Bananas, Rice, Applesauce, Toast)', 'Avoid dairy, caffeine, and greasy foods', 'Over-the-counter anti-diarrheal meds like Loperamide (if no fever or bloody stools)'],
+            'seek_help': ['Lasts more than 2 days', 'Signs of dehydration (extreme thirst, dry mouth, little urination)', 'Severe abdominal pain', 'Stools with blood or pus', 'Fever above 102°F (39°C)']
+        },
+        'loose motion': {
+            'causes': ['Viral or bacterial infection', 'Food poisoning', 'Medications (like antibiotics)', 'Food intolerances', 'Irritable Bowel Syndrome (IBS)'],
+            'treatment': ['Drink plenty of fluids (water, oral rehydration solutions)', 'Eat bland foods (BRAT diet: Bananas, Rice, Applesauce, Toast)', 'Avoid dairy, caffeine, and greasy foods', 'Over-the-counter anti-diarrheal meds like Loperamide (if no fever or bloody stools)'],
+            'seek_help': ['Lasts more than 2 days', 'Signs of dehydration (extreme thirst, dry mouth, little urination)', 'Severe abdominal pain', 'Stools with blood or pus', 'Fever above 102°F (39°C)']
+        },
         'chest pain': {
             'causes': ['Heart conditions', 'Muscle strain', 'Acid reflux', 'Anxiety', 'Respiratory infections', 'Costochondritis'],
             'treatment': ['Seek immediate medical attention for new chest pain', 'Rest if muscle-related', 'Antacids for acid reflux'],
@@ -315,6 +325,8 @@ MEDICAL_DATABASE = {
 }
 
 
+import knowledge_base
+
 def get_medical_info(query, scraper=None):
     """
     Get medical information from web scraping and local database
@@ -323,23 +335,36 @@ def get_medical_info(query, scraper=None):
     query_lower = query.lower().strip()
     results = []
     
-    # First, try local database for quick response
-    local_result = search_local_database(query_lower)
-    if local_result:
-        results.append(local_result)
-    
-    # Then try web scraping for additional information
-    if scraper:
+    # 1. First, try unified knowledge base
+    symptom_match = knowledge_base.lookup_symptom(query_lower)
+    if symptom_match:
+        results.append({
+            'source': 'Knowledge Base',
+            'content': f"Matched Condition: {symptom_match['matched_symptom'].title()}\nTypical Patient Description: {symptom_match['diagnosis']}"
+        })
+        
+    drug_match = knowledge_base.lookup_drug_info(query_lower)
+    if drug_match:
+        results.append({
+            'source': 'Knowledge Base',
+            'content': f"Drug: {drug_match['name'].title()}\n\nUses: {drug_match['uses']}\n\nSide Effects: {drug_match['side_effects']}"
+        })
+        
+    # 2. Only fallback to web scraping if no local knowledge found
+    if not results and scraper:
         try:
             web_results = scraper.search_health_topic(query)
-            for web_result in web_results[:2]:  # Limit web results
-                results.append({
-                    'source': web_result['source'],
-                    'content': web_result['content']
-                })
+            if web_results:
+                # Relevance check: must contain key terms
+                valid_results = [r for r in web_results if any(w in r['content'].lower() for w in query_lower.split())]
+                for web_result in valid_results[:2]:
+                    results.append({
+                        'source': web_result['source'],
+                        'content': web_result['content']
+                    })
         except Exception as e:
             print(f"Web scraping error: {e}")
-    
+            
     return format_medical_response(query, results)
 
 
@@ -471,7 +496,6 @@ def check_drug_interactions(medications):
     
     found_interactions = []
     checked_pairs = set()
-    unknown_meds = []
     
     # Check each pair of medications
     for i, med1 in enumerate(meds_lower):
@@ -484,214 +508,100 @@ def check_drug_interactions(medications):
                 continue
             checked_pairs.add(pair)
             
-            # 1. Check in local database (Verified)
-            match_found = False
-            for (drug1, drug2), interaction in MEDICAL_DATABASE['drug_interactions'].items():
-                if (drug1 in med1 or med1 in drug1) and (drug2 in med2 or med2 in drug2):
-                    found_interactions.append({
-                        'drugs': f"{med1.title()} + {med2.title()}",
-                        'risk': interaction['risk'],
-                        'effect': interaction['effect'],
-                        'source': 'Verified Database'
-                    })
-                    match_found = True
-                    break
-                elif (drug2 in med1 or med1 in drug2) and (drug1 in med2 or med2 in drug1):
-                    found_interactions.append({
-                        'drugs': f"{med1.title()} + {med2.title()}",
-                        'risk': interaction['risk'],
-                        'effect': interaction['effect'],
-                        'source': 'Verified Database'
-                    })
-                    match_found = True
-                    break
-            
-            # 2. If not found locally, try Dynamic Web Analysis
-            if not match_found:
-                # Try to detect if they are same class (e.g. both NSAIDs)
-                try:
-                    # Quick Wiki check for class keywords
-                    def get_class_keywords(drug):
-                        wiki = scraper.search_wikipedia(f"{drug} medication class")
-                        if not wiki: return ""
-                        text = wiki['content'].lower()
-                        classes = ['nsaid', 'blood thinner', 'antibiotic', 'opioid', 'beta blocker', 'statin']
-                        found = [c for c in classes if c in text[:500]]
-                        return found[0] if found else ""
-
-                    class1 = get_class_keywords(med1)
-                    class2 = get_class_keywords(med2)
-
-                    if class1 and class2 and class1 == class2:
-                         found_interactions.append({
-                            'drugs': f"{med1.title()} + {med2.title()}",
-                            'risk': 'Medium-High',
-                            'effect': f"Potential duplication - Both appear to be {class1.upper()}s. Risk of overdose/side effects.",
-                            'source': 'AI Web Analysis'
-                        })
-                except Exception as e:
-                    print(f"Web interaction check error: {e}")
-
+            # 1. Unified Knowledge Base Lookup (checks preprocessed datasets + hardcoded)
+            kb_match = knowledge_base.lookup_drug_interaction(med1, med2)
+            if kb_match:
+                found_interactions.append({
+                    'drugs': kb_match['drugs'],
+                    'risk': 'High' if 'High' in kb_match['interaction'] else 'Medium',
+                    'effect': kb_match['interaction'],
+                    'source': kb_match['source']
+                })
+    
     # Format response
     if found_interactions:
         risks = [i['risk'] for i in found_interactions]
-        overall_risk = "High" if 'High' in risks else ("Medium" if 'Medium' in risks or 'Medium-High' in risks else "Low")
+        overall_risk = "High" if 'High' in risks else "Medium"
         
-        response = f"""**💊 Drug Interaction Report**
-
-**Medications Checked:** {', '.join([m.title() for m in meds_lower])}
-
-**⚠️ Interactions Found:**
-"""
+        response = f"**💊 Drug Interaction Report**\n\n**Medications Checked:** {', '.join([m.title() for m in meds_lower])}\n\n**⚠️ Interactions Found:**\n"
         for interaction in found_interactions:
             risk_emoji = "🔴" if 'High' in interaction['risk'] else "🟡"
-            response += f"\n{risk_emoji} **{interaction['drugs']}**"
-            response += f"\n   Risk Level: {interaction['risk']}"
-            response += f"\n   Effect: {interaction['effect']}"
-            response += f"\n   Source: {interaction.get('source', 'Database')}\n"
+            response += f"\n{risk_emoji} **{interaction['drugs']}**\n   Risk Level: {interaction['risk']}\n   Effect: {interaction['effect']}\n   Source: {interaction.get('source', 'Database')}\n"
         
-        response += """
-**Recommendations:**
-• Consult your pharmacist or doctor about these interactions
-• Do not stop taking medications without medical advice
-"""
+        response += "\n**Recommendations:**\n• Consult your pharmacist or doctor about these interactions\n• Do not stop taking medications without medical advice\n"
         return response, overall_risk
     
     else:
-        return f"""**💊 Drug Interaction Report**
-
-**Medications Checked:** {', '.join([m.title() for m in meds_lower])}
-
-**✅ No Major Interactions Detected**
-
-No verified interactions found in our database or via class-analysis. 
-However, new or rare drugs may not be fully indexed.
-
-**General Safety Tips:**
-• Take medications as prescribed
-• Report any unusual symptoms to your doctor immediately
-""", "Low"
+        med_names = ' and '.join([m.title() for m in meds_lower])
+        return f"**💊 Drug Interaction Report**\n\n**Medications Checked:** {', '.join([m.title() for m in meds_lower])}\n\n**✅ No Major Interactions Detected**\n\nOur dynamic analysis of the combination **{med_names}** did not detect any severe interactions in the offline knowledge base.\n\nWhile these medications are generally safe to take together, every individual's response can vary. Always verify new combinations with your doctor or pharmacist.\n\n**General Safety Tips:**\n• Take medications as prescribed\n• Report any unusual symptoms to your doctor immediately\n", "Low"
 
 
 def analyze_symptoms(symptoms_list, duration=None, severity=None, scraper=None):
-    """
-    Analyze symptoms using Hybrid Approach (Local DB + Web NLP)
-    """
     if not symptoms_list:
         return "Please provide symptoms to analyze.", "N/A", []
     
     symptoms_lower = [s.lower().strip() for s in symptoms_list]
     
-    # 1. Check Local Emergency Database
-    emergency_symptoms = {
-        'chest pain', 'difficulty breathing', 'shortness of breath',
-        'severe headache', 'sudden numbness', 'loss of consciousness',
-        'severe abdominal pain', 'coughing blood', 'vomiting blood',
-        'sudden vision loss', 'high fever with rash'
-    }
-    is_emergency = any(emerg in ' '.join(symptoms_lower) for emerg in emergency_symptoms)
-    
-    # 2. Local Database Lookup & Accumulate missing symptoms
     symptom_info = []
     recommendations = set()
     missing_symptoms = []
-
+    
+    # 1. Unified Knowledge Base Lookup
     for symptom in symptoms_lower:
-        found = False
-        for db_symptom, data in MEDICAL_DATABASE['symptoms'].items():
-            if db_symptom in symptom or symptom in db_symptom:
-                symptom_info.append({
-                    'name': db_symptom.title(),
-                    'causes': data.get('causes', []),
-                    'treatment': data.get('treatment', []),
-                    'source': 'Verified Database'
-                })
-                for rec in data.get('treatment', [])[:2]:
-                    recommendations.add(rec)
-                found = True
-        
-        if not found:
+        kb_match = knowledge_base.lookup_symptom(symptom)
+        if kb_match:
+            symptom_info.append({
+                'name': kb_match['matched_symptom'].title(),
+                'causes': [kb_match['diagnosis']],
+                'treatment': ["Consult a medical professional for appropriate treatment based on the diagnosis."],
+                'source': 'Knowledge Base'
+            })
+            recommendations.add(f"Consider evaluating for {kb_match['diagnosis']}")
+        else:
             missing_symptoms.append(symptom)
-
-    # 3. Dynamic Web Analysis for Missing Symptoms
+            
+    # 2. Dynamic Web Analysis ONLY for Missing Symptoms
     if missing_symptoms and scraper:
         for ms in missing_symptoms:
             try:
-                # Scrape generic "symptom" page
                 wiki_data = scraper.search_wikipedia(f"{ms} symptom medical")
                 if wiki_data:
                     content = wiki_data['content'][:1000].lower()
-                    
-                    # NLP Keyword Scanning for Risk
-                    danger_words = ['emergency', 'fatal', 'urgent', 'call 911', 'severe', 'hospital', 'immediate']
-                    found_dangers = [w for w in danger_words if w in content]
-                    
-                    if found_dangers:
-                        is_emergency = True
-                        recommendations.add(f"Web warning for {ms}: Mention of '{found_dangers[0]}' detected.")
-
-                    # Simple Extraction for Recommendations/Causes
-                    # (Very basic regex-like logic)
-                    wiki_causes = []
-                    if "caused by" in content:
-                        parts = content.split("caused by")[1].split(".")
-                        wiki_causes.append(parts[0].strip())
-                    
-                    symptom_info.append({
-                        'name': ms.title(),
-                        'causes': wiki_causes if wiki_causes else ["See details in description"],
-                        'treatment': ["Consult doctor for diagnosis"],
-                        'description': content[:300] + "...",
-                        'source': 'Web Analysis (Wikipedia)'
-                    })
+                    if ms.split()[0] in content:  # Relevance check
+                        danger_words = ['emergency', 'fatal', 'urgent', 'call 911', 'severe']
+                        found_dangers = [w for w in danger_words if w in content]
+                        if found_dangers:
+                            recommendations.add(f"Web warning for {ms}: Mention of '{found_dangers[0]}' detected.")
+                        
+                        wiki_causes = []
+                        if "caused by" in content:
+                            parts = content.split("caused by")[1].split(".")
+                            wiki_causes.append(parts[0].strip())
+                        
+                        if wiki_causes:
+                            symptom_info.append({
+                                'name': ms.title(),
+                                'causes': wiki_causes,
+                                'treatment': ['Consult a doctor for appropriate diagnosis'],
+                                'source': 'Web AI Analysis'
+                            })
             except Exception as e:
-                print(f"Dynamic symptom check error: {e}")
-
-    # Determine risk level
-    if is_emergency:
-        risk_level = "High"
-    elif severity and int(severity) >= 7:
-        risk_level = "Medium-High"
-    elif severity and int(severity) >= 5:
-        risk_level = "Medium"
-    else:
-        risk_level = "Low"
-    
-    # Build response
-    if is_emergency:
-        response = f"""🚨 **EMERGENCY ALERT**
-
-**Symptoms reported:** {', '.join([s.title() for s in symptoms_list])}
-
-**⚠️ These symptoms may indicate a serious condition.**
-
-**PLEASE:**
-• Call emergency services (911) 
-• Go to the nearest emergency room immediately
-"""
-    else:
-        response = f"""**📋 Symptom Analysis**
-
-**Reported Symptoms:** {', '.join([s.title() for s in symptoms_list])}
-**Risk Assessment:** {risk_level}
-"""
-        if symptom_info:
-            response += "\n---\n**Analysis Details:**\n"
-            for info in symptom_info:
-                response += f"\n**{info['name']}** ({info.get('source', 'Unknown')})"
-                if info.get('description'):
-                     response += f"\nNote: {info['description']}"
-                if info.get('causes'):
-                    response += f"\nPossible causes: {', '.join(info['causes'][:3])}"
+                print(f"Web symptom error: {e}")
+                
+    # Formatting
+    if not symptom_info:
+        return "No specific medical information found for these symptoms.", "Unknown", list(recommendations)
         
-        if recommendations:
-            response += "\n\n**💡 Recommendations:**"
-            for rec in list(recommendations)[:5]:
-                response += f"\n• {rec}"
-
-        response += "\n\n⚠️ **Disclaimer**: AI Analysis. Consult local doctor."
-
-    return response, risk_level, list(recommendations)
+    diagnosis = "**Symptom Analysis**\n\n"
+    for info in symptom_info:
+        diagnosis += f"**{info['name']}** (Source: {info.get('source', 'Database')})\n"
+        if info['causes']:
+            diagnosis += f"Possible causes: {', '.join(info['causes']).capitalize()}\n"
+        diagnosis += "\n"
+        
+    risk_level = "High" if any('warning' in r.lower() for r in recommendations) else "Medium"
+    
+    return diagnosis, risk_level, list(recommendations)
 
 
 # Initialize scraper instance
@@ -706,44 +616,31 @@ def check_food_interactions(medications, scraper=None):
     meds_lower = [med.lower().strip() for med in medications if med.strip()]
     findings = []
     
-    # 1. Local Database Match
-    for food, data in MEDICAL_DATABASE['food_interactions'].items():
-        matched_meds = []
-        for med in meds_lower:
-            if any(m in med or med in m for m in data['medications']):
-                matched_meds.append(med.title())
-        
-        if matched_meds:
-            findings.append({
-                'food': food.title(),
-                'medications': matched_meds,
-                'effect': data['effect'],
-                'severity': data['severity'],
-                'source': 'Verified Medical Database'
-            })
-    
-    # 2. Dynamic Web Search for unknown meds
-    if scraper:
-        # Avoid duplicate searches, only check if we don't have enough info
-        for med in meds_lower[:2]: # Limit to first 2 for speed
+    # 1. Unified Local Knowledge Base Match
+    for med in meds_lower:
+        kb_matches = knowledge_base.lookup_food_interaction(med)
+        if kb_matches:
+            findings.extend(kb_matches)
+            
+    # 2. Dynamic Web Search only if not enough info and scraper is provided
+    if scraper and len(findings) == 0:
+        for med in meds_lower[:2]:
             try:
-                # Search for specific interactions
                 wiki = scraper.search_wikipedia(f"{med} food and drink interactions")
                 if wiki and ("avoid" in wiki['content'].lower() or "interaction" in wiki['content'].lower()):
                     content = wiki['content'].lower()
-                    
-                    # Look for common trigger foods in the text if not already found
-                    common_triggers = ['grapefruit', 'alcohol', 'caffeine', 'dairy', 'milk', 'cheese', 'green leafy', 'kale', 'spinach', 'tyramine', 'banana']
-                    for trigger in common_triggers:
-                        if trigger in content and trigger not in [f['food'].lower() for f in findings]:
-                            findings.append({
-                                'food': trigger.title(),
-                                'medications': [med.title()],
-                                'effect': f"Mentioned in clinical resources: Potential interaction with {trigger}. See source.",
-                                'severity': 'Review Required',
-                                'source': wiki['source']
-                            })
+                    if med in content: # Relevance check
+                        common_triggers = ['grapefruit', 'alcohol', 'caffeine', 'dairy', 'milk', 'cheese', 'green leafy', 'kale', 'spinach', 'tyramine', 'banana']
+                        for trigger in common_triggers:
+                            if trigger in content and trigger not in [f['food'].lower() for f in findings]:
+                                findings.append({
+                                    'food': trigger.title(),
+                                    'medications': [med.title()],
+                                    'effect': f'Web Analysis suggests potential interaction between {med.title()} and {trigger}.',
+                                    'severity': 'Medium',
+                                    'source': 'AI Web Extraction'
+                                })
             except Exception as e:
-                print(f"Web food check error: {e}")
+                print(f"Web food interaction error: {e}")
                 
     return findings

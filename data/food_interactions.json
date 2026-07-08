@@ -1,0 +1,71 @@
+{
+  "grapefruit": {
+    "medications": [
+      "atorvastatin",
+      "simvastatin",
+      "lovastatin",
+      "nifedipine",
+      "felodipine",
+      "buspirone",
+      "sertraline"
+    ],
+    "effect": "Blocks enzymes that break down these drugs, causing dangerously high levels in the blood.",
+    "severity": "High"
+  },
+  "leafy greens": {
+    "medications": [
+      "warfarin",
+      "coumadin"
+    ],
+    "effect": "Vitamin K in greens can neutralize blood thinners, increasing risk of blood clots.",
+    "severity": "High"
+  },
+  "dairy": {
+    "medications": [
+      "ciprofloxacin",
+      "tetracycline",
+      "doxycycline"
+    ],
+    "effect": "Calcium binds to antibiotics, preventing them from being absorbed properly.",
+    "severity": "Medium"
+  },
+  "alcohol": {
+    "medications": [
+      "acetaminophen",
+      "metformin",
+      "sertraline",
+      "alprazolam",
+      "metronidazole"
+    ],
+    "effect": "Increased risk of liver damage, lactic acidosis, or extreme drowsiness.",
+    "severity": "High"
+  },
+  "caffeine": {
+    "medications": [
+      "ephedrine",
+      "theophylline",
+      "albuterol"
+    ],
+    "effect": "Increased heart rate, jitters, and potential for cardiac stress.",
+    "severity": "Medium"
+  },
+  "bananas": {
+    "medications": [
+      "lisinopril",
+      "captopril",
+      "enalapril",
+      "spironolactone"
+    ],
+    "effect": "Potassium-rich foods with ACE inhibitors can lead to hyperkalemia (dangerously high potassium).",
+    "severity": "Medium"
+  },
+  "licorice": {
+    "medications": [
+      "digoxin",
+      "furosemide",
+      "hydrochlorothiazide"
+    ],
+    "effect": "Can lower potassium levels and interfere with blood pressure/heart medications.",
+    "severity": "Medium"
+  }
+}

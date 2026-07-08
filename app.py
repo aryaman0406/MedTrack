@@ -24,14 +24,14 @@ try:
     OCR_AVAILABLE = True
 except ImportError:
     OCR_AVAILABLE = False
-    print("⚠️ OCR not available: pytesseract/cv2 not installed")
+    print("OCR not available: pytesseract/cv2 not installed")
 
 try:
     from weasyprint import HTML
     PDF_AVAILABLE = True
 except (ImportError, OSError) as e:
     PDF_AVAILABLE = False
-    print(f"⚠️ PDF export not available: {e}")
+    print(f"PDF export not available: {e}")
 
 # API-Free Web Scraper for real-time medical data
 from web_scraper import (
@@ -66,7 +66,7 @@ if database_url.startswith('postgres://'):
 
 # Log the resolved URL at startup (password masked) so Render logs show the real user/host
 _masked_url = _re.sub(r'(:)[^:@]+(@)', r'\1****\2', database_url)
-print(f"🔗 Connecting to database: {_masked_url}")
+print(f"Connecting to database: {_masked_url}")
 
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -659,6 +659,10 @@ def symptom_checker():
     
     if request.method == "POST":
         symptoms = request.form.getlist('symptoms')
+        other_symptoms = request.form.get('other_symptoms', '').strip()
+        if other_symptoms:
+            symptoms.append(other_symptoms)
+            
         duration = request.form.get('duration')
         severity = request.form.get('severity')
         
@@ -1148,9 +1152,9 @@ def food_safety():
             
         if search_meds:
             try:
-                print(f"🌐 Checking food interactions for: {search_meds}")
+                print(f"Checking food interactions for: {search_meds}")
                 results = check_food_interactions(search_meds, scraper=medical_scraper)
-                print(f"✅ Food safety check complete - {len(results)} findings")
+                print(f"Food safety check complete - {len(results)} findings")
             except Exception as e:
                 print(f"Food safety analysis error: {e}")
                 traceback.print_exc()

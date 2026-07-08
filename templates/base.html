@@ -10,6 +10,11 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap"
     rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
@@ -117,7 +122,7 @@
   {% endif %}
 
   <!-- Main Content Area -->
-  <main class="{% if current_user.is_authenticated %}main-content{% endif %} container min-h-[calc(100vh-4rem)]">
+  <main class="{% if current_user.is_authenticated %}main-content px-4 lg:pr-8{% else %}container mx-auto px-4{% endif %} min-h-[calc(100vh-4rem)]">
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
     <div class="max-w-4xl mx-auto mt-6 space-y-2">

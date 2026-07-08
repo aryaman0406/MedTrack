@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto">
+<div class="max-w-6xl mx-auto">
 
   <!-- Welcome Header -->
   <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 animate-fade-in"
@@ -120,8 +120,7 @@
                 </div>
                 <div>
                   <h3 class="text-xl font-bold {% if r.taken %}text-gray-400 line-through{% endif %}">{{ r.name }}</h3>
-                  <p class="text-gray-500 font-medium">{{ r.dosage }} <span class="mx-2 text-gray-300">•</span> {{
-                    r.time }}</p>
+                  <p class="text-gray-500 font-medium">{{ r.dosage }}{% if 'mg' not in r.dosage|lower and 'ml' not in r.dosage|lower %} mg{% endif %} <span class="mx-2 text-gray-300">•</span> {{ r.time }}</p>
                 </div>
               </div>
 
@@ -159,10 +158,10 @@
     </div>
 
     <!-- Right: Insights & Alerts -->
-    <div class="space-y-8 animate-fade-in" style="animation-delay: 0.4s;">
+    <div class="space-y-8 animate-fade-in min-w-0" style="animation-delay: 0.4s;">
 
       <!-- Compliance Gauge -->
-      <div class="card p-8 text-center bg-gradient-to-b from-white to-gray-50 dark:from-slate-800 dark:to-slate-800/50">
+      <div class="card p-8 text-center bg-gradient-to-b from-white to-gray-50 dark:from-slate-800 dark:to-slate-800/50 overflow-hidden">
         <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-8">Weekly Compliance</h3>
         <div class="relative w-48 h-48 mx-auto mb-6">
           <svg class="w-full h-full transform -rotate-90">
