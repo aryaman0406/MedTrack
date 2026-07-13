@@ -4,10 +4,7 @@ from flask_login import LoginManager, login_user, login_required, logout_user, U
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, date, timedelta
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import LabelEncoder
 from collections import Counter
-import numpy as np
 import os
 import traceback
 from dotenv import load_dotenv
@@ -16,22 +13,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from flask import make_response
+import importlib.util
 
-# Optional imports for OCR and PDF (may not work in all environments)
-try:
-    import pytesseract
-    import cv2
-    OCR_AVAILABLE = True
-except ImportError:
-    OCR_AVAILABLE = False
-    print("OCR not available: pytesseract/cv2 not installed")
-
-try:
-    from weasyprint import HTML
-    PDF_AVAILABLE = True
-except (ImportError, OSError) as e:
-    PDF_AVAILABLE = False
-    print(f"PDF export not available: {e}")
+# Optional availability flags (evaluated instantly without importing heavy modules)
+OCR_AVAILABLE = importlib.util.find_spec("pytesseract") is not None and importlib.util.find_spec("cv2") is not None
+PDF_AVAILABLE = importlib.util.find_spec("weasyprint") is not None
 
 # API-Free Web Scraper for real-time medical data
 from web_scraper import (
@@ -215,6 +201,13 @@ def predict_missed_reminders(reminders):
     if not reminders:
         return []
 
+    try:
+        from sklearn.linear_model import LogisticRegression
+        from sklearn.preprocessing import LabelEncoder
+    except ImportError:
+        print("Scikit-learn not available. Skipping prediction.")
+        return []
+
     features, labels = [], []
     le_dosage = LabelEncoder()
     all_dosages = list({r.dosage for r in reminders})
@@ -297,14 +290,25 @@ def login():
 @app.route("/export/pdf")
 @login_required
 def export_pdf():
-    if not PDF_AVAILABLE:
-        flash("PDF export is not available in this environment.", "error")
+    try:
+        from weasyprint import HTML
+    except (ImportError, OSError) as e:
+        print(f"PDF export failed due to missing system/python dependencies: {e}")
+        flash("PDF export is not available in this environment due to missing dependencies.", "error")
         return redirect(url_for("dashboard"))
+    
     user = current_user
     reminders = Reminder.query.filter_by(user_id=user.id).all()
     symptoms = SymptomLog.query.filter_by(user_id=user.id).all()
     rendered = render_template("report_pdf.html", user=user, reminders=reminders, symptoms=symptoms)
-    pdf = HTML(string=rendered).write_pdf()
+    
+    try:
+        pdf = HTML(string=rendered).write_pdf()
+    except Exception as e:
+        print(f"Error generating PDF: {e}")
+        flash("Failed to generate PDF report.", "error")
+        return redirect(url_for("dashboard"))
+        
     response = make_response(pdf)
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = 'inline; filename=health_report.pdf'
@@ -315,6 +319,10 @@ def export_pdf():
 def logout():
     logout_user()
     return redirect(url_for("index"))
+
+@app.route("/ping")
+def ping():
+    return jsonify({"status": "healthy"}), 200
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -531,15 +539,26 @@ def chatbot():
 def ocr_upload():
     extracted_text = ""
     if request.method == "POST":
-        if not OCR_AVAILABLE:
+        try:
+            import pytesseract
+            import cv2
+        except ImportError as e:
+            print(f"OCR failed due to missing dependencies: {e}")
             flash("OCR is not available in this environment.", "error")
             return render_template("ocr_upload.html", extracted_text=extracted_text)
+        
         f = request.files['image']
         filename = secure_filename(f.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         f.save(filepath)
-        image = cv2.imread(filepath)
-        extracted_text = pytesseract.image_to_string(image)
+        
+        try:
+            image = cv2.imread(filepath)
+            extracted_text = pytesseract.image_to_string(image)
+        except Exception as e:
+            print(f"Error processing image OCR: {e}")
+            flash("Error processing image for text extraction.", "error")
+            
     return render_template("ocr_upload.html", extracted_text=extracted_text)
 
 
