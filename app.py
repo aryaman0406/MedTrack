@@ -16,7 +16,6 @@ from flask import make_response
 import importlib.util
 
 # Optional availability flags (evaluated instantly without importing heavy modules)
-OCR_AVAILABLE = importlib.util.find_spec("pytesseract") is not None and importlib.util.find_spec("cv2") is not None
 PDF_AVAILABLE = importlib.util.find_spec("weasyprint") is not None
 
 # API-Free Web Scraper for real-time medical data
@@ -399,7 +398,8 @@ def dashboard():
         risk_alerts=risk_alerts,
         expiry_warnings=expiry_warnings,
         filter=filter_option,
-        progress_percent=progress_percent
+        progress_percent=progress_percent,
+        now=datetime.now()
     )
 
 @app.route("/reminder/<int:reminder_id>/mark", methods=["POST"])
@@ -531,35 +531,9 @@ def chatbot():
             traceback.print_exc()
             reply = f"⚠️ Sorry, there was an error processing your question. Please try again."
     
-    return render_template("chatbot.html", reply=reply)
+    chat_history = ChatHistory.query.filter_by(user_id=current_user.id).order_by(ChatHistory.timestamp.desc()).limit(5).all()
+    return render_template("chatbot.html", reply=reply, chat_history=chat_history)
 
-
-@app.route("/ocr-upload", methods=["GET", "POST"])
-@login_required
-def ocr_upload():
-    extracted_text = ""
-    if request.method == "POST":
-        try:
-            import pytesseract
-            import cv2
-        except ImportError as e:
-            print(f"OCR failed due to missing dependencies: {e}")
-            flash("OCR is not available in this environment.", "error")
-            return render_template("ocr_upload.html", extracted_text=extracted_text)
-        
-        f = request.files['image']
-        filename = secure_filename(f.filename)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        f.save(filepath)
-        
-        try:
-            image = cv2.imread(filepath)
-            extracted_text = pytesseract.image_to_string(image)
-        except Exception as e:
-            print(f"Error processing image OCR: {e}")
-            flash("Error processing image for text extraction.", "error")
-            
-    return render_template("ocr_upload.html", extracted_text=extracted_text)
 
 
 @app.route("/analytics")
