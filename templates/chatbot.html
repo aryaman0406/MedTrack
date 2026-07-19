@@ -1,20 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="max-w-4xl mx-auto bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg transition-colors duration-300">
-  <h1 class="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">💬 MedTrack Chatbot</h1>
-  
+<div class="chatbot-wrapper max-w-4xl mx-auto">
+  <h1 class="text-2xl font-bold mb-4" style="color: var(--text-main);">💬 MedTrack Chatbot</h1>
+
   <!-- Quick Questions -->
   <div class="quick-questions grid grid-cols-2 md:flex md:flex-wrap gap-2 mb-6">
-    <button class="flex items-center justify-center p-3 w-full sm:w-auto bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg shadow-sm transition-colors" onclick="askQuestion('What are the symptoms of diabetes?')">
+    <button onclick="askQuestion('What are the symptoms of diabetes?')">
       🩺 Diabetes Symptoms
     </button>
-    <button class="flex items-center justify-center p-3 w-full sm:w-auto bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg shadow-sm transition-colors" onclick="askQuestion('How to treat high blood pressure?')">
+    <button onclick="askQuestion('How to treat high blood pressure?')">
       💊 Blood Pressure
     </button>
-    <button class="flex items-center justify-center p-3 w-full sm:w-auto bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg shadow-sm transition-colors" onclick="askQuestion('What causes headaches?')">
+    <button onclick="askQuestion('What causes headaches?')">
       🧠 Headaches
     </button>
-    <button class="flex items-center justify-center p-3 w-full sm:w-auto bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg shadow-sm transition-colors" onclick="askQuestion('How to improve sleep quality?')">
+    <button onclick="askQuestion('How to improve sleep quality?')">
       😴 Sleep Quality
     </button>
   </div>
@@ -22,12 +22,12 @@
   <!-- Chat History -->
   {% if chat_history %}
   <div class="chat-container mb-4">
-    <h3 class="font-semibold mb-2 text-gray-700 dark:text-gray-300">Recent Conversations</h3>
+    <h3>Recent Conversations</h3>
     {% for chat in chat_history[:3] %}
     <div class="message user">
       <div class="message-content">
         <strong>You:</strong> {{ chat.question }}
-        <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ chat.timestamp.strftime('%m/%d %H:%M') }}</div>
+        <div class="text-xs mt-1" style="opacity:0.7;">{{ chat.timestamp.strftime('%m/%d %H:%M') }}</div>
       </div>
     </div>
     <div class="message bot">
@@ -42,15 +42,15 @@
   <!-- Input Form -->
   <form method="POST" id="chatForm">
     <div class="input-group">
-      <textarea name="question" id="questionInput" 
-                class="chat-input flex-1 border dark:border-gray-600 p-3 rounded-l-lg mb-4 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 transition-colors duration-300" 
-                placeholder="Ask me about symptoms, treatments, medications..." 
-                rows="2"></textarea>
+      <textarea name="question" id="questionInput"
+                class="chat-input"
+                placeholder="Ask me about symptoms, treatments, medications..."
+                rows="3"></textarea>
       <button type="button" class="voice-input-btn" id="voiceBtn" title="Voice Input">
         🎤
       </button>
     </div>
-    <button type="submit" class="submit-btn bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-6 py-3 rounded-lg w-full font-medium transition-all duration-300" id="submitBtn">
+    <button type="submit" class="submit-btn" id="submitBtn">
       Ask Medibot
     </button>
   </form>
@@ -67,19 +67,19 @@
 
   <!-- Response -->
   {% if reply %}
-  <div class="response-container mt-4 bg-gray-100 dark:bg-gray-700 p-4 rounded-lg transition-colors duration-300">
-    <h2 class="font-semibold text-gray-900 dark:text-gray-100">🤖 Medibot says:</h2>
-    <div class="mt-2 whitespace-pre-wrap text-gray-900 dark:text-gray-100 font-medium leading-relaxed">{{ reply|safe }}</div>
-    
+  <div class="response-container mt-4">
+    <h2>🤖 Medibot says:</h2>
+    <div class="whitespace-pre-wrap mt-2">{{ reply|safe }}</div>
+
     <!-- Action Buttons -->
-    <div class="action-buttons mt-3 flex gap-2 flex-wrap">
-      <button onclick="copyResponse()" class="action-btn text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 hover:underline text-sm transition-colors">
+    <div class="action-buttons mt-3">
+      <button onclick="copyResponse()" class="action-btn" style="color: var(--primary);">
         📋 Copy Response
       </button>
-      <button onclick="shareResponse()" class="action-btn text-green-500 dark:text-green-400 hover:text-green-600 dark:hover:text-green-300 hover:underline text-sm transition-colors">
+      <button onclick="shareResponse()" class="action-btn" style="color: var(--success);">
         📤 Share
       </button>
-      <button onclick="saveToNotes()" class="action-btn text-purple-500 dark:text-purple-400 hover:text-purple-600 dark:hover:text-purple-300 hover:underline text-sm transition-colors">
+      <button onclick="saveToNotes()" class="action-btn" style="color: #7c3aed;">
         📝 Save to Notes
       </button>
     </div>
@@ -87,8 +87,8 @@
   {% endif %}
 
   <!-- Medical Disclaimer -->
-  <div class="disclaimer mt-6 p-3 bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-400 dark:border-yellow-500 text-sm transition-colors duration-300">
-    <p class="text-yellow-800 dark:text-yellow-200"><strong>⚠️ Medical Disclaimer:</strong> This chatbot provides general health information only. 
+  <div class="disclaimer mt-6">
+    <p><strong>⚠️ Medical Disclaimer:</strong> This chatbot provides general health information only.
     Always consult with qualified healthcare professionals for medical advice, diagnosis, or treatment.</p>
   </div>
 </div>
@@ -146,19 +146,21 @@ document.getElementById('chatForm').addEventListener('submit', function() {
 
 // Copy response functionality
 function copyResponse() {
-  const responseText = document.querySelector('.whitespace-pre-wrap').textContent;
-  navigator.clipboard.writeText(responseText).then(function() {
+  const el = document.querySelector('.response-container .whitespace-pre-wrap');
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent).then(function() {
     alert('Response copied to clipboard!');
   });
 }
 
 // Share response functionality
 function shareResponse() {
+  const el = document.querySelector('.response-container .whitespace-pre-wrap');
+  if (!el) return;
   if (navigator.share) {
-    const responseText = document.querySelector('.whitespace-pre-wrap').textContent;
     navigator.share({
       title: 'Medical Information from MedTrack',
-      text: responseText
+      text: el.textContent
     });
   } else {
     copyResponse();
@@ -167,10 +169,6 @@ function shareResponse() {
 
 // Save to notes functionality
 function saveToNotes() {
-  const responseText = document.querySelector('.whitespace-pre-wrap').textContent;
-  const question = '{{ request.form.get("question", "") }}';
-  
-  // You can implement this to save to a notes section
   alert('Note saved! (You can implement this to save to a notes database)');
 }
 

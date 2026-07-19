@@ -44,7 +44,8 @@
                         <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Medication
                             Names</label>
                         <textarea name="medications" rows="4"
-                            class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                            class="w-full px-4 py-3 rounded-xl outline-none form-control"
+                            style="min-height:100px;"
                             placeholder="e.g. Atorvastatin, Lisinopril, Warfarin... (Separated by commas)">{{ request.form.medications if request.form.medications else user_medications|join(', ') }}</textarea>
                         <p class="mt-2 text-xs text-gray-500 italic">Leaves blank to use your dashboard medications.</p>
                     </div>
@@ -196,12 +197,12 @@
 
                 <div class="grid grid-cols-2 gap-4 mt-10 w-full max-w-sm">
                     <div
-                        class="p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm text-center">
+                        class="p-4 rounded-2xl border shadow-sm text-center" style="background: var(--bg-card); border-color: var(--border-soft);">
                         <span class="text-2xl mb-2 block">🍇</span>
-                        <span class="text-xs font-bold text-gray-500 uppercase">Fruit Alerts</span>
+                        <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Fruit Alerts</span>
                     </div>
                     <div
-                        class="p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm text-center">
+                        class="p-4 rounded-2xl border shadow-sm text-center" style="background: var(--bg-card); border-color: var(--border-soft);">
                         <span class="text-2xl mb-2 block">🥛</span>
                         <span class="text-xs font-bold text-gray-500 uppercase">Dairy Check</span>
                     </div>

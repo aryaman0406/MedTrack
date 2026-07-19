@@ -7,7 +7,7 @@
     <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-red-600 to-orange-600">
       🤕 Side Effects Tracker
     </h1>
-    <p class="text-gray-600 dark:text-gray-400 mt-2">Track and identify medication side effect patterns.</p>
+    <p style="color: var(--text-muted); margin-top: 0.5rem;">Track and identify medication side effect patterns.</p>
   </div>
 
   {% with messages = get_flashed_messages(with_categories=true) %}
@@ -48,16 +48,16 @@
   <div class="grid lg:grid-cols-3 gap-6">
     <!-- Log Side Effect Form -->
     <div class="lg:col-span-1">
-      <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 sticky top-6">
-        <h2 class="text-lg font-bold mb-4 flex items-center dark:text-white">
-          <span class="bg-red-100 dark:bg-red-900 p-2 rounded-lg mr-3">📝</span>
+      <div class="card p-6 sticky top-6">
+        <h2 class="text-lg font-bold mb-4 flex items-center" style="color: var(--text-main);">
+          <span class="bg-red-100 dark:bg-red-900/40 p-2 rounded-lg mr-3">📝</span>
           Log Side Effect
         </h2>
         <form method="POST" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Medication</label>
+            <label class="block text-sm font-medium mb-1" style="color: var(--text-muted);">Medication</label>
             <input list="medications" name="medication_name" placeholder="Type or select medication" required
-              class="w-full p-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-red-500 outline-none">
+              class="form-control">
             <datalist id="medications">
               {% for med in medications %}
               <option value="{{ med.name }}">
@@ -66,15 +66,13 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Side Effect</label>
-            <input name="side_effect" placeholder="e.g., Headache, Nausea" required
-              class="w-full p-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-red-500 outline-none">
+            <label class="block text-sm font-medium mb-1" style="color: var(--text-muted);">Side Effect</label>
+            <input name="side_effect" placeholder="e.g., Headache, Nausea" required class="form-control">
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Severity</label>
-            <select name="severity" required
-              class="w-full p-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-red-500 outline-none">
+            <label class="block text-sm font-medium mb-1" style="color: var(--text-muted);">Severity</label>
+            <select name="severity" required class="form-control">
               <option value="1">1 - Mild</option>
               <option value="2">2 - Moderate</option>
               <option value="3">3 - Severe</option>
@@ -82,19 +80,17 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Time After Dose</label>
-            <input name="time_after_dose" placeholder="e.g., 2 hours, 30 minutes"
-              class="w-full p-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-red-500 outline-none">
+            <label class="block text-sm font-medium mb-1" style="color: var(--text-muted);">Time After Dose</label>
+            <input name="time_after_dose" placeholder="e.g., 2 hours, 30 minutes" class="form-control">
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
-            <textarea name="notes" rows="3" placeholder="Additional details..."
-              class="w-full p-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-red-500 outline-none"></textarea>
+            <label class="block text-sm font-medium mb-1" style="color: var(--text-muted);">Notes</label>
+            <textarea name="notes" rows="3" placeholder="Additional details..." class="form-control"></textarea>
           </div>
 
           <button type="submit"
-            class="w-full bg-gradient-to-r from-red-600 to-orange-600 text-white font-medium py-2.5 rounded-lg hover:shadow-lg hover:opacity-90 transition-all">
+            class="w-full bg-gradient-to-r from-red-600 to-orange-600 text-white font-medium py-2.5 rounded-xl hover:shadow-lg hover:opacity-90 transition-all">
             Log Side Effect
           </button>
         </form>
@@ -103,23 +99,25 @@
 
     <!-- Side Effects History -->
     <div class="lg:col-span-2">
-      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-        <div class="p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-          <h2 class="font-bold text-gray-800 dark:text-white">Side Effects History</h2>
+      <div class="card overflow-hidden">
+        <div class="p-4 border-b" style="border-color: var(--border-soft); background: var(--bg-main);">
+          <h2 class="font-bold" style="color: var(--text-main);">Side Effects History</h2>
         </div>
 
-        <div class="divide-y divide-gray-100 dark:divide-gray-700">
+        <div style="divide-y: 1px solid var(--border-soft);">
           {% for effect in effects %}
-          <div class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+          <div class="p-4 transition-colors" style="border-bottom: 1px solid var(--border-soft);"
+               onmouseover="this.style.background='var(--bg-main)'"
+               onmouseout="this.style.background='var(--bg-card)'">
             <div class="flex justify-between items-start">
               <div class="flex-1">
                 <div class="flex items-center space-x-2 mb-2">
-                  <span class="font-bold text-gray-900 dark:text-white">{{ effect.medication_name }}</span>
-                  <span class="text-gray-400">→</span>
-                  <span class="text-gray-700 dark:text-gray-300">{{ effect.side_effect }}</span>
+                  <span class="font-bold" style="color: var(--text-main);">{{ effect.medication_name }}</span>
+                  <span style="color: var(--text-muted);">→</span>
+                  <span style="color: var(--text-muted);">{{ effect.side_effect }}</span>
                 </div>
                 
-                <div class="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
+                <div class="flex items-center space-x-4 text-sm" style="color: var(--text-muted);">
                   <span class="flex items-center">
                     {% if effect.severity == 1 %}
                       <span class="w-2 h-2 bg-yellow-400 rounded-full mr-1"></span> Mild
@@ -138,13 +136,13 @@
                 </div>
 
                 {% if effect.notes %}
-                <p class="mt-2 text-sm text-gray-600 dark:text-gray-400 italic">{{ effect.notes }}</p>
+                <p class="mt-2 text-sm italic" style="color: var(--text-muted);">{{ effect.notes }}</p>
                 {% endif %}
               </div>
             </div>
           </div>
           {% else %}
-          <div class="p-8 text-center text-gray-500 dark:text-gray-400">
+          <div class="p-8 text-center" style="color: var(--text-muted);">
             <div class="text-4xl mb-3">📋</div>
             <p>No side effects logged yet.</p>
             <p class="text-sm mt-1">Start tracking to identify patterns.</p>

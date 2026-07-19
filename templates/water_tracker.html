@@ -58,7 +58,7 @@
             <div class="goal-input-group">
                 <input type="number" name="goal" value="{{ water_log.goal }}" min="1" max="20" class="goal-input">
                 <span>glasses (250ml each)</span>
-                <button type="submit" class="btn-primary btn-small">Update</button>
+                <button type="submit" class="btn btn-primary btn-small">Update</button>
             </div>
         </form>
     </div>
@@ -98,9 +98,8 @@
     border-radius: 20px;
     padding: 40px;
     text-align: center;
-    /* White text is always correct here: this card uses a fixed deep-purple
-       gradient as background regardless of theme, so white always contrasts. */
-    color: var(--text-on-primary);
+    /* White text always correct here: fixed deep-purple gradient bg regardless of theme */
+    color: #ffffff;
     margin-bottom: 20px;
 }
 
@@ -135,8 +134,8 @@
     text-align: center;
 }
 
-.water-count { font-size: 3rem; font-weight: bold; display: block; }
-.water-goal { font-size: 1rem; opacity: 0.9; }
+.water-count { font-size: 3rem; font-weight: bold; display: block; color: #fff; }
+.water-goal { font-size: 1rem; opacity: 0.9; color: #fff; }
 
 .water-controls {
     display: flex;
@@ -158,30 +157,19 @@
 
 .water-btn:hover:not(:disabled) { transform: scale(1.1); }
 .water-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.water-btn-add { background: #4ade80; color: var(--text-on-primary); }
-.water-btn-remove { background: #f87171; color: var(--text-on-primary); }
+.water-btn-add { background: #4ade80; color: #fff; }
+.water-btn-remove { background: #f87171; color: #fff; }
 .water-glass-icon { font-size: 3rem; }
-.water-status { font-size: 1.1rem; margin-top: 10px; }
+.water-status { font-size: 1.1rem; margin-top: 10px; color: rgba(255,255,255,0.95); }
 
-.settings-card, .chart-card, .tips-card {
-    background: var(--card-bg);
-    border-radius: 15px;
-    padding: 25px;
-    margin-bottom: 20px;
-    box-shadow: var(--shadow);
-}
-
-.settings-card h3, .chart-card h3, .tips-card h3 {
-    margin-bottom: 15px;
-    color: var(--text-primary);
-}
-
+/* .settings-card, .chart-card, .tips-card already defined in styles.css */
 .goal-form { display: flex; align-items: center; }
 .goal-input-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.goal-input-group > span { color: var(--text-main); }
 .goal-input {
     width: 80px;
     padding: 10px;
-    border: 2px solid var(--border);
+    border: 2px solid var(--border-soft);
     border-radius: 10px;
     font-size: 1.2rem;
     text-align: center;
@@ -223,9 +211,10 @@
 .tips-list { list-style: none; padding: 0; }
 .tips-list li {
     padding: 10px 0;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--border-soft);
     padding-left: 25px;
     position: relative;
+    color: var(--text-main);
 }
 .tips-list li:before { content: "💧"; position: absolute; left: 0; }
 .tips-list li:last-child { border-bottom: none; }

@@ -10,12 +10,12 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap"
     rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
     }
   </script>
-  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
   <script>
@@ -28,7 +28,7 @@
   </script>
 </head>
 
-<body class="bg-gray-50 dark:bg-slate-900 transition-colors duration-500">
+<body class="transition-colors duration-500">
 
   <!-- Premium Navbar -->
   <header class="navbar h-16 shadow-premium">
@@ -45,7 +45,8 @@
           System Active
         </div>
         <button id="themeToggle"
-          class="btn btn-secondary px-3 py-2 rounded-full border-none bg-gray-100 dark:bg-slate-800 text-xl hover:scale-110">
+          class="btn btn-secondary px-3 py-2 rounded-full border-none text-xl hover:scale-110"
+          style="background: var(--bg-tertiary); color: var(--text-main);">
           🌓
         </button>
         <a href="{{ url_for('profile') }}"
@@ -144,10 +145,10 @@
 
   <!-- Mobile Navigation Overlay (Simplified) -->
   <div id="mobileMenu" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[200] hidden lg:hidden">
-    <div class="bg-white dark:bg-slate-800 w-4/5 h-full p-6 flex flex-col">
+    <div class="w-4/5 h-full p-6 flex flex-col" style="background: var(--bg-card);">
       <div class="flex items-center justify-between mb-10">
         <span class="nav-logo text-2xl">MedTrack</span>
-        <button id="closeMobileMenu" class="text-2xl">✕</button>
+        <button id="closeMobileMenu" class="text-2xl" style="color: var(--text-main);">✕</button>
       </div>
       <nav class="space-y-4 overflow-y-auto">
         <a href="{{ url_for('dashboard') }}" class="nav-link text-lg">📊 Dashboard</a>
@@ -156,9 +157,10 @@
         <a href="{{ url_for('food_safety') }}" class="nav-link text-lg">🍎 Food Safety</a>
         <a href="{{ url_for('water_tracker') }}" class="nav-link text-lg">💧 Hydration</a>
         <a href="{{ url_for('appointments') }}" class="nav-link text-lg">📅 Appointments</a>
-        <hr class="border-gray-100 dark:border-slate-700">
+        <hr style="border-color: var(--border-soft);">
         <a href="{{ url_for('logout') }}" class="nav-link text-red-500">🚪 Logout</a>
       </nav>
+
     </div>
   </div>
 

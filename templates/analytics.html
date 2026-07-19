@@ -134,8 +134,8 @@
 // Register the plugin
 Chart.register(ChartDataLabels);
 
-// Get theme preference
-const isDarkMode = document.body.classList.contains('dark') || localStorage.getItem('theme') === 'dark';
+// Get theme preference — dark class is on <html>, not <body>
+const isDarkMode = document.documentElement.classList.contains('dark') || localStorage.getItem('theme') === 'dark';
 
 // Common chart colors for dark/light theme
 const colors = {
