@@ -29,13 +29,7 @@ app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
 # Database configuration (supports Supabase PostgreSQL)
 import re as _re
 
-database_url = os.getenv('DATABASE_URL')
-if not database_url:
-    raise RuntimeError(
-        "DATABASE_URL environment variable is not set. "
-        "In production, add it in the Render dashboard → Environment. "
-        "Locally, add it to your .env file."
-    )
+database_url = os.getenv('DATABASE_URL', 'sqlite:///medtrack.db')
 
 # Normalize Supabase/Heroku legacy postgres:// scheme to postgresql://
 # (SQLAlchemy requires postgresql://, not postgres://)
