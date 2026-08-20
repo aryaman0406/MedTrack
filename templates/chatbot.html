@@ -1,105 +1,266 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="chatbot-wrapper max-w-4xl mx-auto">
-  <h1 class="text-2xl font-bold mb-4" style="color: var(--text-main);">💬 MedTrack Chatbot</h1>
+  <div class="flex items-center justify-between mb-4">
+    <div>
+      <h1 class="text-2xl font-bold flex items-center gap-2" style="color: var(--text-main);">
+        <span>💬</span> MedTrack Health AI
+      </h1>
+      <p class="text-xs" style="color: var(--text-muted);">Real-time clinical intelligence powered by Gemini AI</p>
+    </div>
+    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+      Online & Ready
+    </span>
+  </div>
 
   <!-- Quick Questions -->
   <div class="quick-questions grid grid-cols-2 md:flex md:flex-wrap gap-2 mb-6">
-    <button onclick="askQuestion('What are the symptoms of diabetes?')">
+    <button onclick="quickAsk('What are the symptoms of diabetes?')">
       🩺 Diabetes Symptoms
     </button>
-    <button onclick="askQuestion('How to treat high blood pressure?')">
+    <button onclick="quickAsk('How to manage high blood pressure?')">
       💊 Blood Pressure
     </button>
-    <button onclick="askQuestion('What causes headaches?')">
+    <button onclick="quickAsk('What causes severe headaches?')">
       🧠 Headaches
     </button>
-    <button onclick="askQuestion('How to improve sleep quality?')">
+    <button onclick="quickAsk('How to improve deep sleep quality?')">
       😴 Sleep Quality
     </button>
   </div>
 
-  <!-- Chat History -->
-  {% if chat_history %}
-  <div class="chat-container mb-4">
-    <h3>Recent Conversations</h3>
-    {% for chat in chat_history[:3] %}
-    <div class="message user">
-      <div class="message-content">
-        <strong>You:</strong> {{ chat.question }}
-        <div class="text-xs mt-1" style="opacity:0.7;">{{ chat.timestamp.strftime('%m/%d %H:%M') }}</div>
+  <!-- Real-time Chat Stream Container -->
+  <div class="chat-container mb-4" id="chatStream" style="min-height: 220px; max-height: 520px; overflow-y: auto;">
+    {% if chat_history %}
+      {% for chat in chat_history|reverse %}
+      <div class="message user mb-3">
+        <div class="message-content">
+          <strong>You:</strong> {{ chat.question }}
+          <div class="text-xs mt-1" style="opacity:0.7;">{{ chat.timestamp.strftime('%m/%d %H:%M') if chat.timestamp else '' }}</div>
+        </div>
       </div>
-    </div>
-    <div class="message bot">
-      <div class="message-content">
-        <strong>🤖 Medibot:</strong> {{ chat.answer[:150] }}{% if chat.answer|length > 150 %}...{% endif %}
+      <div class="message bot mb-4">
+        <div class="message-content">
+          <div class="flex items-center justify-between mb-1">
+            <strong>🤖 Medibot:</strong>
+            <button onclick="copyText(this)" class="text-xs opacity-70 hover:opacity-100 transition-opacity">📋 Copy</button>
+          </div>
+          <div class="bot-text text-sm leading-relaxed whitespace-pre-wrap">{{ chat.answer|safe }}</div>
+        </div>
       </div>
+      {% endfor %}
+    {% else %}
+      <div id="emptyChatPlaceholder" class="p-8 text-center" style="color: var(--text-muted);">
+        <div class="text-4xl mb-3">🩺</div>
+        <p class="font-medium text-base">Hello! I'm Medibot.</p>
+        <p class="text-xs mt-1">Ask me about your symptoms, medications, interactions, or general health.</p>
+      </div>
+    {% endif %}
+
+    <!-- Live Dynamic Target Container -->
+    <div id="liveMessages"></div>
+
+    <!-- Typing Indicator -->
+    <div class="typing-indicator hidden" id="typingIndicator" style="display: none; align-items: center; gap: 8px; margin: 12px 0;">
+      <span class="text-sm font-medium" style="color: var(--text-muted);">🤖 Medibot is evaluating...</span>
+      <div class="typing-dots">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <span id="responseTimer" class="text-xs text-blue-500 font-mono">0.0s</span>
     </div>
-    {% endfor %}
   </div>
-  {% endif %}
 
   <!-- Input Form -->
-  <form method="POST" id="chatForm">
+  <form id="chatForm" onsubmit="handleChatSubmit(event)" class="relative">
     <div class="input-group">
       <textarea name="question" id="questionInput"
                 class="chat-input"
-                placeholder="Ask me about symptoms, treatments, medications..."
-                rows="3"></textarea>
+                placeholder="Ask me anything (e.g. 'Can I take ibuprofen with paracetamol?', 'Remedies for sore throat')..."
+                rows="2"
+                onkeydown="handleKeyDown(event)"></textarea>
       <button type="button" class="voice-input-btn" id="voiceBtn" title="Voice Input">
         🎤
       </button>
     </div>
-    <button type="submit" class="submit-btn" id="submitBtn">
-      Ask Medibot
-    </button>
+    <div class="flex justify-between items-center mt-2">
+      <span class="text-xs" style="color: var(--text-muted);">Press <kbd class="px-1.5 py-0.5 rounded bg-gray-200 dark:bg-slate-700 text-[10px]">Enter</kbd> to send, <kbd class="px-1.5 py-0.5 rounded bg-gray-200 dark:bg-slate-700 text-[10px]">Shift+Enter</kbd> for new line</span>
+      <button type="submit" class="submit-btn" id="submitBtn">
+        Send Question 🚀
+      </button>
+    </div>
   </form>
-
-  <!-- Typing Indicator -->
-  <div class="typing-indicator" id="typingIndicator">
-    🤖 Medibot is thinking
-    <div class="typing-dots">
-      <span></span>
-      <span></span>
-      <span></span>
-    </div>
-  </div>
-
-  <!-- Response -->
-  {% if reply %}
-  <div class="response-container mt-4">
-    <h2>🤖 Medibot says:</h2>
-    <div class="whitespace-pre-wrap mt-2">{{ reply|safe }}</div>
-
-    <!-- Action Buttons -->
-    <div class="action-buttons mt-3">
-      <button onclick="copyResponse()" class="action-btn" style="color: var(--primary);">
-        📋 Copy Response
-      </button>
-      <button onclick="shareResponse()" class="action-btn" style="color: var(--success);">
-        📤 Share
-      </button>
-      <button onclick="saveToNotes()" class="action-btn" style="color: #7c3aed;">
-        📝 Save to Notes
-      </button>
-    </div>
-  </div>
-  {% endif %}
 
   <!-- Medical Disclaimer -->
   <div class="disclaimer mt-6">
-    <p><strong>⚠️ Medical Disclaimer:</strong> This chatbot provides general health information only.
-    Always consult with qualified healthcare professionals for medical advice, diagnosis, or treatment.</p>
+    <p><strong>⚠️ Medical Disclaimer:</strong> Medibot provides educational health information. Always consult a qualified medical professional for diagnosis or treatment.</p>
   </div>
 </div>
 
 <script>
 let recognition;
 let isRecording = false;
+let timerInterval = null;
 
-// Quick question functionality
-function askQuestion(question) {
-  document.getElementById('questionInput').value = question;
+// Format Markdown safely in browser
+function formatMarkdown(text) {
+  if (!text) return '';
+  let formatted = text
+    .replace(/^### (.*$)/gim, '<h3 class="text-base font-bold mt-3 mb-1 text-blue-600 dark:text-blue-400">$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2 class="text-lg font-bold mt-4 mb-2">$1</h2>')
+    .replace(/^# (.*$)/gim, '<h1 class="text-xl font-extrabold mt-4 mb-2">$1</h1>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/^(\*|-)\s+(.*$)/gim, '<li class="ml-4 list-disc">$2</li>')
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+  return formatted;
+}
+
+function scrollToBottom() {
+  const stream = document.getElementById('chatStream');
+  if (stream) {
+    stream.scrollTop = stream.scrollHeight;
+  }
+}
+
+function quickAsk(text) {
+  document.getElementById('questionInput').value = text;
+  document.getElementById('questionInput').focus();
+  handleChatSubmit(new Event('submit'));
+}
+
+function handleKeyDown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    handleChatSubmit(e);
+  }
+}
+
+async function handleChatSubmit(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  
+  const input = document.getElementById('questionInput');
+  const question = input.value.trim();
+  if (!question) return;
+
+  // Clear placeholder if present
+  const placeholder = document.getElementById('emptyChatPlaceholder');
+  if (placeholder) placeholder.style.display = 'none';
+
+  // Append user message immediately
+  const liveMessages = document.getElementById('liveMessages');
+  const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  
+  const userDiv = document.createElement('div');
+  userDiv.className = 'message user mb-3 animate-fade-in';
+  userDiv.innerHTML = `
+    <div class="message-content">
+      <strong>You:</strong> ${escapeHtml(question)}
+      <div class="text-xs mt-1" style="opacity:0.7;">${nowStr}</div>
+    </div>
+  `;
+  liveMessages.appendChild(userDiv);
+  
+  input.value = '';
+  input.style.height = 'auto';
+  scrollToBottom();
+
+  // Show typing indicator with real-time response stopwatch
+  const typingIndicator = document.getElementById('typingIndicator');
+  const submitBtn = document.getElementById('submitBtn');
+  const timerSpan = document.getElementById('responseTimer');
+  
+  typingIndicator.style.display = 'flex';
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = 'Thinking... ⏳';
+  
+  const startTime = Date.now();
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    timerSpan.textContent = `${elapsed}s`;
+  }, 100);
+  
+  scrollToBottom();
+
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ question: question })
+    });
+
+    const data = await response.json();
+    clearInterval(timerInterval);
+    const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+
+    if (response.ok && data.reply) {
+      const botDiv = document.createElement('div');
+      botDiv.className = 'message bot mb-4 animate-fade-in';
+      botDiv.innerHTML = `
+        <div class="message-content">
+          <div class="flex items-center justify-between mb-1">
+            <strong>🤖 Medibot:</strong>
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] opacity-60">⚡ ${duration}s</span>
+              <button onclick="copyText(this)" class="text-xs opacity-70 hover:opacity-100 transition-opacity">📋 Copy</button>
+            </div>
+          </div>
+          <div class="bot-text text-sm leading-relaxed">${formatMarkdown(data.reply)}</div>
+        </div>
+      `;
+      liveMessages.appendChild(botDiv);
+    } else {
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'message bot mb-4';
+      errorDiv.innerHTML = `
+        <div class="message-content" style="border-left: 3px solid #ef4444;">
+          <strong>🤖 Medibot:</strong>
+          <p class="text-sm text-red-500 mt-1">${escapeHtml(data.error || 'Unable to fetch response. Please try again.')}</p>
+        </div>
+      `;
+      liveMessages.appendChild(errorDiv);
+    }
+  } catch (err) {
+    clearInterval(timerInterval);
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'message bot mb-4';
+    errorDiv.innerHTML = `
+      <div class="message-content" style="border-left: 3px solid #ef4444;">
+        <strong>🤖 Medibot:</strong>
+        <p class="text-sm text-red-500 mt-1">⚠️ Network error connecting to MedTrack server. Please check your connection.</p>
+      </div>
+    `;
+    liveMessages.appendChild(errorDiv);
+  } finally {
+    typingIndicator.style.display = 'none';
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = 'Send Question 🚀';
+    scrollToBottom();
+  }
+}
+
+function escapeHtml(text) {
+  const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+  return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
+function copyText(btn) {
+  const msgContent = btn.closest('.message-content');
+  const textEl = msgContent.querySelector('.bot-text');
+  if (textEl) {
+    navigator.clipboard.writeText(textEl.innerText || textEl.textContent).then(() => {
+      const orig = btn.innerText;
+      btn.innerText = '✅ Copied!';
+      setTimeout(() => btn.innerText = orig, 1800);
+    });
+  }
 }
 
 // Voice input functionality
@@ -126,6 +287,7 @@ if ('webkitSpeechRecognition' in window) {
   recognition.onresult = function(event) {
     const transcript = event.results[0][0].transcript;
     document.getElementById('questionInput').value = transcript;
+    document.getElementById('questionInput').focus();
   };
 
   recognition.onend = function() {
@@ -137,46 +299,14 @@ if ('webkitSpeechRecognition' in window) {
   document.getElementById('voiceBtn').style.display = 'none';
 }
 
-// Form submission with loading indicator
-document.getElementById('chatForm').addEventListener('submit', function() {
-  document.getElementById('typingIndicator').style.display = 'flex';
-  document.getElementById('submitBtn').disabled = true;
-  document.getElementById('submitBtn').innerHTML = '🤔 Thinking...';
-});
-
-// Copy response functionality
-function copyResponse() {
-  const el = document.querySelector('.response-container .whitespace-pre-wrap');
-  if (!el) return;
-  navigator.clipboard.writeText(el.textContent).then(function() {
-    alert('Response copied to clipboard!');
-  });
-}
-
-// Share response functionality
-function shareResponse() {
-  const el = document.querySelector('.response-container .whitespace-pre-wrap');
-  if (!el) return;
-  if (navigator.share) {
-    navigator.share({
-      title: 'Medical Information from MedTrack',
-      text: el.textContent
-    });
-  } else {
-    copyResponse();
-  }
-}
-
-// Save to notes functionality
-function saveToNotes() {
-  alert('Note saved! (You can implement this to save to a notes database)');
-}
-
 // Auto-resize textarea
 document.getElementById('questionInput').addEventListener('input', function() {
   this.style.height = 'auto';
-  this.style.height = this.scrollHeight + 'px';
+  this.style.height = Math.min(this.scrollHeight, 180) + 'px';
 });
+
+// Scroll to bottom on load
+document.addEventListener('DOMContentLoaded', scrollToBottom);
 </script>
 
 {% endblock %}

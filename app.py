@@ -18,15 +18,8 @@ import importlib.util
 # Optional availability flags (evaluated instantly without importing heavy modules)
 PDF_AVAILABLE = importlib.util.find_spec("weasyprint") is not None
 
-# API-Free Web Scraper for real-time medical data
-from web_scraper import (
-    MedicalWebScraper, 
-    get_medical_info, 
-    check_drug_interactions as scraper_check_drug_interactions,
-    analyze_symptoms as scraper_analyze_symptoms,
-    MEDICAL_DATABASE,
-    check_food_interactions
-)
+# Gemini AI Service for live medical data
+import gemini_service
 
 app = Flask(__name__)
 
@@ -61,9 +54,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'   
-# Initialize the API-free medical web scraper
-medical_scraper = MedicalWebScraper()
-print("MedTrack: Web Scraper Initialized (Wikipedia/MedlinePlus)")
+print("MedTrack: Gemini AI Service Initialized")
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
@@ -428,7 +419,28 @@ def mark_reminder_taken(reminder_id):
                 streak.longest_streak = streak.current_streak
             db.session.commit()
     
+    if request.is_json or request.headers.get('Accept') == 'application/json' or request.args.get('format') == 'json':
+        return jsonify({"status": "success", "message": f"{reminder.name} marked as taken.", "time_taken": reminder.time_taken})
+    
     return redirect(url_for("dashboard"))
+
+
+@app.route("/api/reminders/active")
+@login_required
+def get_active_reminders():
+    """API endpoint to get user's active pending medication reminders for real-time notification alerts."""
+    reminders = Reminder.query.filter_by(user_id=current_user.id, taken=False).order_by(Reminder.time).all()
+    data = [
+        {
+            "id": r.id,
+            "name": r.name,
+            "dosage": r.dosage,
+            "time": r.time,
+            "taken": r.taken
+        }
+        for r in reminders
+    ]
+    return jsonify({"reminders": data, "count": len(data)})
 
 @app.route("/side-effects", methods=["GET", "POST"])
 @login_required
@@ -474,10 +486,36 @@ def side_effects():
     # Get user's medications for dropdown
     medications = Reminder.query.filter_by(user_id=current_user.id).all()
     
+    # AI analysis of side effect patterns
+    ai_analysis = ""
+    if effects:
+        try:
+            effects_for_ai = []
+            for effect in effects:
+                effects_for_ai.append({
+                    'medication_name': effect.medication_name,
+                    'side_effect': effect.side_effect,
+                    'severity': effect.severity,
+                    'occurrences': 1
+                })
+            # Also include pattern data for better analysis
+            for p in frequent_patterns:
+                effects_for_ai.append({
+                    'medication_name': p['medication'],
+                    'side_effect': p['side_effect'],
+                    'avg_severity': p['avg_severity'],
+                    'occurrences': p['occurrences']
+                })
+            ai_analysis = gemini_service.analyze_side_effects(effects_for_ai)
+        except Exception as e:
+            print(f"AI side effect analysis error: {e}")
+            ai_analysis = ""
+    
     return render_template('side_effects.html', 
                          effects=effects, 
                          patterns=frequent_patterns,
-                         medications=medications)
+                         medications=medications,
+                         ai_analysis=ai_analysis)
 
 
 @app.route("/reminder/<int:reminder_id>/undo", methods=["POST"])
@@ -496,21 +534,30 @@ def undo_reminder_taken(reminder_id):
 def chatbot():
     reply = None
     if request.method == "POST":
-        question = request.form.get('question', '').strip()
+        question = (request.json.get('question') if request.is_json else request.form.get('question', '')).strip()
         
         if not question:
+            if request.is_json:
+                return jsonify({"error": "Please enter a question."}), 400
             reply = "⚠️ Please enter a question."
             return render_template("chatbot.html", reply=reply)
 
         try:
             print(f"Processing question: {question}")
             
-            # Use API-free web scraper for real-time medical information
-            print("Fetching real-time data from medical websites...")
-            result = get_medical_info(question, medical_scraper)
-            reply = f"🩺 **Medical Information** (Real-time Web Data):\n\n{result}"
-            sources_text = "Wikipedia, MedlinePlus, Medical Database"
-            print("Successfully fetched medical information")
+            # Get user's current medications for context
+            user_meds = []
+            try:
+                reminders = Reminder.query.filter_by(user_id=current_user.id).all()
+                user_meds = list(set([r.name for r in reminders if r.name]))
+            except:
+                pass
+            
+            # Use Gemini AI for live medical information
+            result = gemini_service.chat(question, user_medications=user_meds)
+            reply = result
+            sources_text = "Gemini AI"
+            print("Successfully fetched medical information from Gemini")
             
             # Save to chat history
             try:
@@ -526,13 +573,66 @@ def chatbot():
             except Exception as db_error:
                 print(f"Database save failed: {db_error}")
 
+            if request.is_json or request.headers.get('Accept') == 'application/json':
+                return jsonify({
+                    "status": "success",
+                    "question": question,
+                    "reply": result,
+                    "timestamp": datetime.now().strftime('%m/%d %H:%M')
+                })
+
         except Exception as e:
             print(f"Error in chatbot: {e}")
             traceback.print_exc()
-            reply = f"⚠️ Sorry, there was an error processing your question. Please try again."
+            error_msg = f"⚠️ Sorry, there was an error processing your question. Please try again.\n\nError: {str(e)}"
+            if request.is_json:
+                return jsonify({"error": error_msg}), 500
+            reply = error_msg
     
-    chat_history = ChatHistory.query.filter_by(user_id=current_user.id).order_by(ChatHistory.timestamp.desc()).limit(5).all()
+    chat_history = ChatHistory.query.filter_by(user_id=current_user.id).order_by(ChatHistory.timestamp.desc()).limit(10).all()
     return render_template("chatbot.html", reply=reply, chat_history=chat_history)
+
+
+@app.route("/api/chat", methods=["POST"])
+@login_required
+def api_chat():
+    """Ultra-fast JSON API for real-time chatbot interaction without page reloads."""
+    data = request.get_json(silent=True) or {}
+    question = data.get('question', '').strip()
+    if not question:
+        return jsonify({"error": "Please enter a question."}), 400
+        
+    try:
+        user_meds = []
+        try:
+            reminders = Reminder.query.filter_by(user_id=current_user.id).all()
+            user_meds = list(set([r.name for r in reminders if r.name]))
+        except:
+            pass
+            
+        result = gemini_service.chat(question, user_medications=user_meds)
+        
+        try:
+            chat_entry = ChatHistory(
+                user_id=current_user.id,
+                question=question,
+                answer=result,
+                sources="Gemini AI"
+            )
+            db.session.add(chat_entry)
+            db.session.commit()
+        except Exception as db_err:
+            print(f"Chat history save failed: {db_err}")
+            
+        return jsonify({
+            "status": "success",
+            "question": question,
+            "reply": result,
+            "timestamp": datetime.now().strftime('%m/%d %H:%M')
+        })
+    except Exception as e:
+        print(f"Error in api_chat: {e}")
+        return jsonify({"error": f"⚠️ Error generating response: {str(e)}"}), 500
 
 
 
@@ -663,26 +763,24 @@ def symptom_checker():
             try:
                 print(f"Analyzing symptoms: {symptoms}")
                 
-                # Use API-free web scraper for symptom analysis
-                diagnosis, risk_level, recommendations = scraper_analyze_symptoms(
-                    symptoms, duration, severity, scraper=medical_scraper
-                )
+                # Build user context for better analysis
+                user_info = {}
+                if current_user.age:
+                    user_info['age'] = current_user.age
+                if current_user.conditions:
+                    user_info['conditions'] = current_user.conditions
                 
-                # Try to get additional real-time info from Wikipedia
-                try:
-                    for symptom in symptoms[:2]:  # Limit to avoid too many requests
-                        wiki_info = medical_scraper.search_wikipedia(f"{symptom} medical symptom")
-                        if wiki_info:
-                            diagnosis += f"\n\n📖 **Additional Info ({wiki_info['title']}):**\n{wiki_info['content'][:500]}..."
-                except Exception as web_error:
-                    print(f"Web scraping error: {web_error}")
+                # Use Gemini AI for symptom analysis
+                diagnosis, risk_level, recommendations = gemini_service.analyze_symptoms(
+                    symptoms, duration, severity, user_info=user_info
+                )
                 
                 print(f"Symptom analysis complete - Risk: {risk_level}")
                 
             except Exception as e:
                 print(f"Symptom analysis error: {e}")
                 traceback.print_exc()
-                diagnosis = "⚠️ Error analyzing symptoms. Please try again."
+                diagnosis = f"⚠️ Error analyzing symptoms. Please try again.\n\nError: {str(e)}"
                 risk_level = "Unknown"
                 recommendations = ["Please consult a healthcare professional"]
     
@@ -711,24 +809,15 @@ def drug_interactions():
             try:
                 print(f"Checking drug interactions for: {medications}")
                 
-                # Use API-free web scraper for drug interaction analysis
-                interactions, risk_level = scraper_check_drug_interactions(medications)
-                
-                # Try to get additional drug info from Wikipedia
-                try:
-                    for med in medications[:2]:  # Limit to avoid too many requests
-                        drug_info = medical_scraper.get_drug_info_drugbank(med)
-                        if drug_info:
-                            interactions += f"\n\n📖 **Drug Info ({med.title()}):**\n{drug_info['info'][:400]}..."
-                except Exception as web_error:
-                    print(f"Web scraping error: {web_error}")
+                # Use Gemini AI for drug interaction analysis
+                interactions, risk_level = gemini_service.check_drug_interactions(medications)
                 
                 print(f"Drug interaction check complete - Risk: {risk_level}")
                 
             except Exception as e:
                 print(f"Drug interaction analysis error: {e}")
                 traceback.print_exc()
-                interactions = "⚠️ Error checking drug interactions. Please try again."
+                interactions = f"⚠️ Error checking drug interactions. Please try again.\n\nError: {str(e)}"
                 risk_level = "Unknown"
         else:
             interactions = "Please enter at least 2 medications to check for interactions."
@@ -1033,35 +1122,20 @@ def dosage_calculator():
 @app.route("/health-news")
 @login_required
 def health_news():
-    # Try to get fresh news from web scraping
     news_items = []
+    health_tips = []
     try:
-        # Use our medical scraper to get health topics
-        topics = ['diabetes prevention', 'heart health tips', 'mental wellness', 
-                  'nutrition advice', 'exercise benefits', 'sleep quality']
+        # Get user's conditions for personalized content
+        user_conditions = []
+        if current_user.conditions:
+            user_conditions = [c.strip() for c in current_user.conditions.split(',') if c.strip()]
         
-        for topic in topics[:4]:  # Limit to avoid too many requests
-            wiki_result = medical_scraper.search_wikipedia(topic)
-            if wiki_result:
-                news_items.append({
-                    'title': wiki_result['title'],
-                    'summary': wiki_result['content'][:300] + '...',
-                    'source': 'Wikipedia',
-                    'url': wiki_result['source'],
-                    'category': topic.split()[0].title()
-                })
+        # Use Gemini AI to generate fresh health tips and news
+        news_items, health_tips = gemini_service.generate_health_tips(user_conditions=user_conditions)
+        print(f"Generated {len(news_items)} news items and {len(health_tips)} health tips")
     except Exception as e:
-        print(f"Error fetching health news: {e}")
-    
-    # Also get some health tips from local database
-    health_tips = [
-        {'title': 'Stay Hydrated', 'tip': 'Drink at least 8 glasses of water daily for optimal health.', 'icon': '💧'},
-        {'title': 'Regular Exercise', 'tip': '150 minutes of moderate exercise per week reduces disease risk.', 'icon': '🏃'},
-        {'title': 'Quality Sleep', 'tip': 'Adults need 7-9 hours of sleep for proper body recovery.', 'icon': '😴'},
-        {'title': 'Balanced Diet', 'tip': 'Include fruits, vegetables, and whole grains in every meal.', 'icon': '🥗'},
-        {'title': 'Mental Health', 'tip': 'Practice mindfulness and take breaks to reduce stress.', 'icon': '🧘'},
-        {'title': 'Regular Checkups', 'tip': 'Annual health screenings catch problems early.', 'icon': '🏥'},
-    ]
+        print(f"Error generating health content: {e}")
+        traceback.print_exc()
     
     return render_template("health_news.html", news_items=news_items, health_tips=health_tips)
 
@@ -1146,7 +1220,7 @@ def food_safety():
         if search_meds:
             try:
                 print(f"Checking food interactions for: {search_meds}")
-                results = check_food_interactions(search_meds, scraper=medical_scraper)
+                results = gemini_service.check_food_interactions(search_meds)
                 print(f"Food safety check complete - {len(results)} findings")
             except Exception as e:
                 print(f"Food safety analysis error: {e}")

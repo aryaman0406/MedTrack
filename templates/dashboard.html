@@ -222,30 +222,4 @@
     </div>
   </div>
 </div>
-
-<script>
-  // Real-time notification checks
-  document.addEventListener("DOMContentLoaded", () => {
-    const reminders = {{ reminders_json| tojson
-  }};
-  const notified = new Set();
-
-  setInterval(() => {
-    const now = new Date();
-    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-
-    reminders.forEach(r => {
-      if (!r.taken && r.time === currentTime && !notified.has(r.id)) {
-        notified.add(r.id);
-        if ("Notification" in window && Notification.permission === "granted") {
-          new Notification("💊 MedTrack Reminder", {
-            body: `It's time for your ${r.name} (${r.dosage}) dose.`,
-            icon: "https://cdn-icons-png.flaticon.com/512/3028/3028549.png"
-          });
-        }
-      }
-    });
-  }, 30000);
-    });
-</script>
 {% endblock %}

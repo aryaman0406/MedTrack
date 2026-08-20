@@ -45,6 +45,19 @@
   </div>
   {% endif %}
 
+  <!-- AI Analysis -->
+  {% if ai_analysis %}
+  <div class="card p-6 mb-6">
+    <h2 class="text-lg font-bold mb-3 flex items-center" style="color: var(--text-main);">
+      <span class="bg-purple-100 dark:bg-purple-900/40 p-2 rounded-lg mr-3">🤖</span>
+      AI Clinical Insights
+    </h2>
+    <div class="prose dark:prose-invert max-w-none text-sm" style="color: var(--text-muted);">
+      {{ ai_analysis|safe }}
+    </div>
+  </div>
+  {% endif %}
+
   <div class="grid lg:grid-cols-3 gap-6">
     <!-- Log Side Effect Form -->
     <div class="lg:col-span-1">
